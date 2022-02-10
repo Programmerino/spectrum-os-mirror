@@ -74,7 +74,30 @@ python3.pkgs.buildPythonApplication rec {
     })
   ];
 
-  setupHook = ./setup-hook.sh;
+  cpuFamily = with stdenv.targetPlatform;
+    /**/ if isAarch32 then "arm"
+    else if isx86_32  then "x86"
+    else uname.processor;
+
+  crossFile = if stdenv.hostPlatform == stdenv.targetPlatform then null else
+    builtins.toFile "cross-file.conf" ''
+      [properties]
+      needs_exe_wrapper = ${lib.boolToString (!stdenv.hostPlatform.canExecute stdenv.targetPlatform)}
+
+      [host_machine]
+      system = '${stdenv.targetPlatform.parsed.kernel.name}'
+      cpu_family = '${cpuFamily}'
+      cpu = '${stdenv.targetPlatform.parsed.cpu.name}'
+      endian = ${if stdenv.targetPlatform.isLittleEndian then "'little'" else "'big'"}
+
+      [binaries]
+      llvm-config = 'llvm-config-native'
+    '';
+
+  setupHook = substituteAll {
+    src = ./setup-hook.sh;
+    crossFlags = lib.optionalString (crossFile != null) "--cross-file=${crossFile}";
+  };
 
   nativeCheckInputs = [ ninja pkg-config ];
   checkInputs = [ zlib ]
