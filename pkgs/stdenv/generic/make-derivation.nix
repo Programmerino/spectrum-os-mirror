@@ -381,30 +381,6 @@ else let
           "-DCMAKE_CROSSCOMPILING_EMULATOR=env"
         ]);
 
-      mesonFlags =
-        let
-          # See https://mesonbuild.com/Reference-tables.html#cpu-families
-          cpuFamily = platform: with platform;
-            /**/ if isAarch32 then "arm"
-            else if isx86_32  then "x86"
-            else platform.uname.processor;
-
-          crossFile = builtins.toFile "cross-file.conf" ''
-            [properties]
-            needs_exe_wrapper = ${lib.boolToString (!stdenv.buildPlatform.canExecute stdenv.hostPlatform)}
-
-            [host_machine]
-            system = '${stdenv.targetPlatform.parsed.kernel.name}'
-            cpu_family = '${cpuFamily stdenv.targetPlatform}'
-            cpu = '${stdenv.targetPlatform.parsed.cpu.name}'
-            endian = ${if stdenv.targetPlatform.isLittleEndian then "'little'" else "'big'"}
-
-            [binaries]
-            llvm-config = 'llvm-config-native'
-          '';
-          crossFlags = lib.optionals (stdenv.hostPlatform != stdenv.buildPlatform) [ "--cross-file=${crossFile}" ];
-        in crossFlags ++ mesonFlags;
-
       inherit patches;
 
       inherit doCheck doInstallCheck;
