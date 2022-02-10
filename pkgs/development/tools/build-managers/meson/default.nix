@@ -3,6 +3,7 @@
 , fetchPypi
 , fetchpatch
 , installShellFiles
+, rust
 , ninja
 , pkg-config
 , python3
@@ -100,6 +101,7 @@ python3.pkgs.buildPythonApplication rec {
 
       [binaries]
       llvm-config = 'llvm-config-native'
+      rust = ['rustc', '--target=${rust.toRustTargetSpec stdenv.targetPlatform}']
     '';
 
   setupHook = substituteAll {
