@@ -102,6 +102,10 @@ stdenv.mkDerivation {
     hash = "sha256-jn/S0xjxZPnkGYpTRIpL3dKxGe7+Z+EmOGHiE0UkQqg=";
   };
 
+  patches = [
+    ./Add-support-for-opening-an-existing-PTY.patch
+  ];
+
   depsBuildBuild = [
     pkg-config
   ];
