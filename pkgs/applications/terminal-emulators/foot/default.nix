@@ -104,6 +104,10 @@ stdenv.mkDerivation {
 
   separateDebugInfo = true;
 
+  patches = [
+    ./Add-support-for-opening-an-existing-PTY.patch
+  ];
+
   depsBuildBuild = [
     pkg-config
   ];
