@@ -1413,8 +1413,6 @@ dependencies = [
 [[package]]
 name = "vhost"
 version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c9b791c5b0717a0558888a4cf7240cea836f39a99cb342e12ce633dcaa078072"
 dependencies = [
  "bitflags",
  "libc",
@@ -1632,6 +1630,7 @@ dependencies = [
  "vfio-ioctls",
  "vfio_user",
  "vhdx",
+ "virtio-bindings 0.2.0",
  "virtio-devices",
  "virtio-queue",
  "vm-allocator",
