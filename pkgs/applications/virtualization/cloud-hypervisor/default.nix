@@ -28,6 +28,39 @@ rustPlatform.buildRustPackage rec {
 
   separateDebugInfo = true;
 
+  vhost = fetchFromGitHub {
+    name = "vhost";
+    owner = "rust-vmm";
+    repo = "vhost";
+    rev = "vhost-user-backend-v0.10.1";
+    hash = "sha256-pq545s7sqE0GFFkEkAvKwFKLuRArNThmRFqEYS3nNVo=";
+  };
+
+  postUnpack = ''
+    unpackFile ${vhost}
+    chmod -R +w vhost
+  '';
+
+  cargoPatches = [
+    ./0001-build-use-local-vhost.patch
+    ./0002-virtio-devices-add-a-GPU-device.patch
+  ];
+
+  vhostPatches = [
+    vhost/0001-vhost-fix-receiving-reply-payloads.patch
+    vhost/0002-vhost_user-add-shared-memory-region-support.patch
+    vhost/0003-vhost-user-add-protocol-flag-for-shmem.patch
+  ];
+
+  postPatch = ''
+    pushd ../vhost
+    for patch in $vhostPatches; do
+        echo applying patch $patch
+        patch -p1 < $patch
+    done
+    popd
+  '';
+
   nativeBuildInputs = [ pkg-config ];
   buildInputs = [ openssl ] ++ lib.optional stdenv.isAarch64 dtc;
 
