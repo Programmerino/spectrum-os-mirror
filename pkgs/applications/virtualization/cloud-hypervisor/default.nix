@@ -1,4 +1,6 @@
-{ lib, stdenv, fetchFromGitHub, rustPlatform, pkg-config, dtc, openssl }:
+{ lib, stdenv, fetchFromGitHub, fetchCrate, rustPlatform, pkg-config
+, dtc, openssl
+}:
 
 rustPlatform.buildRustPackage rec {
   pname = "cloud-hypervisor";
@@ -12,6 +14,40 @@ rustPlatform.buildRustPackage rec {
   };
 
   separateDebugInfo = true;
+
+  vhost = fetchCrate {
+    pname = "vhost";
+    version = "0.6.0";
+    sha256 = "cbB1MVYIqOY2voiZt8jsGMAt54oU62cDdJq2mtj/1BA=";
+  };
+
+  postUnpack = ''
+    mkdir -p vhost/crates
+    pushd vhost/crates
+    unpackFile ${vhost}
+    mv * vhost
+    chmod -R +w vhost
+    popd
+  '';
+
+  cargoPatches = [
+    ./0001-build-use-local-vhost.patch
+    ./0002-virtio-devices-add-a-GPU-device.patch
+  ];
+
+  vhostPatches = [
+    vhost/0001-vhost_user-add-shared-memory-region-support.patch
+    vhost/0002-devices-vhost-user-add-protocol-flag-for-shmem.patch
+  ];
+
+  postPatch = ''
+    pushd ../vhost/crates/vhost
+    for patch in $vhostPatches; do
+        echo applying patch $patch
+        patch -p1 < $patch
+    done
+    popd
+  '';
 
   nativeBuildInputs = [ pkg-config ];
   buildInputs = [ openssl ] ++ lib.optional stdenv.isAarch64 dtc;
