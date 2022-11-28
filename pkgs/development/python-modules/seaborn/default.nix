@@ -13,14 +13,14 @@
 
 buildPythonPackage rec {
   pname = "seaborn";
-  version = "0.12.0";
+  version = "0.12.1";
   format = "pyproject";
 
   disabled = pythonOlder "3.6";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "sha256-iT8XKS2LrKYWwVeN21jrJcctYi9U/F7jKcggfcm1eyM=";
+    hash = "sha256-ux6x1R0wlzaMGHw+8InAKI7B/oqhxp+zJMaKodAt9ME=";
   };
 
   nativeBuildInputs = [
@@ -56,7 +56,7 @@ buildPythonPackage rec {
   ];
 
   meta = with lib; {
-    description = "Statisitical data visualization";
+    description = "Statistical data visualization";
     homepage = "https://seaborn.pydata.org/";
     license = with licenses; [ bsd3 ];
     maintainers = with maintainers; [ fridh ];

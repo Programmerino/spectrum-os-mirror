@@ -36,6 +36,7 @@
 , withLinuxHeaders ? false
 , profilingLibraries ? false
 , withGd ? false
+, withLibcrypt ? false
 , meta
 , extraBuildInputs ? []
 , extraNativeBuildInputs ? []
@@ -70,6 +71,9 @@ stdenv.mkDerivation ({
           $ zdiff -u 2.35-master.patch.gz ../nixpkgs/pkgs/development/libraries/glibc/2.35-master.patch.gz
        */
       ./2.35-master.patch.gz
+
+      /* Can be removed after next snapshot update or release update.  */
+      ./2.35-make-4.4.patch
 
       /* Allow NixOS and Nix to handle the locale-archive. */
       ./nix-locale-archive.patch
@@ -183,7 +187,9 @@ stdenv.mkDerivation ({
       # To avoid linking with -lgcc_s (dynamic link)
       # so the glibc does not depend on its compiler store path
       "libc_cv_as_needed=no"
-    ] ++ lib.optional withGd "--with-gd";
+    ]
+    ++ lib.optional withGd "--with-gd"
+    ++ lib.optional (!withLibcrypt) "--disable-crypt";
 
   makeFlags = [
     "OBJCOPY=${stdenv.cc.targetPrefix}objcopy"

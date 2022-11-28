@@ -3,6 +3,7 @@
 , buildPythonPackage
 , pythonOlder
 , fetchPypi
+, fetchpatch
 , python
 , appdirs
 , attrs
@@ -15,6 +16,7 @@
 , glibcLocales
 , h2
 , hyperlink
+, hypothesis
 , idna
 , incremental
 , priority
@@ -44,7 +46,7 @@
 
 buildPythonPackage rec {
   pname = "twisted";
-  version = "22.8.0";
+  version = "22.10.0";
   format = "setuptools";
 
   disabled = pythonOlder "3.6";
@@ -53,7 +55,7 @@ buildPythonPackage rec {
     pname = "Twisted";
     inherit version;
     extension = "tar.gz";
-    sha256 = "sha256-5bYN458tHaFT++GHTYhf4/y9sh/MRG+nWaU+j8NRO+0=";
+    hash = "sha256-Mqy9QKlPX0bntCwQm/riswIlCUVWF4Oot6BZBI8tTTE=";
   };
 
   __darwinAllowLocalNetworking = true;
@@ -88,6 +90,9 @@ buildPythonPackage rec {
     echo 'MulticastTests.test_multicast.skip = "Reactor was unclean"'>> src/twisted/test/test_udp.py
     echo 'MulticastTests.test_multiListen.skip = "No such device"'>> src/twisted/test/test_udp.py
 
+    # fails since migrating to libxcrypt
+    echo 'HelperTests.test_refuteCryptedPassword.skip = "OSError: Invalid argument"' >> src/twisted/conch/test/test_checkers.py
+
     # not packaged
     substituteInPlace src/twisted/test/test_failure.py \
       --replace "from cython_test_exception_raiser import raiser  # type: ignore[import]" "raiser = None"
@@ -116,6 +121,7 @@ buildPythonPackage rec {
   checkInputs = [
     git
     glibcLocales
+    hypothesis
     pyhamcrest
   ]
   ++ passthru.optional-dependencies.conch
@@ -157,11 +163,7 @@ buildPythonPackage rec {
 
   meta = with lib; {
     homepage = "https://github.com/twisted/twisted";
-    description = "Twisted, an event-driven networking engine written in Python";
-    longDescription = ''
-      Twisted is an event-driven networking engine written in Python
-      and licensed under the MIT license.
-    '';
+    description = "Asynchronous networking framework written in Python";
     license = licenses.mit;
     maintainers = with maintainers; [ SuperSandro2000 ];
   };

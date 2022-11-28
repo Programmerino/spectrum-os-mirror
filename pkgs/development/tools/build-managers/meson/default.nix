@@ -7,7 +7,6 @@
 , pkg-config
 , python3
 , substituteAll
-, withDarwinFrameworksGtkDocPatch ? false
 }:
 
 python3.pkgs.buildPythonApplication rec {
@@ -130,10 +129,6 @@ python3.pkgs.buildPythonApplication rec {
     installShellCompletion --zsh data/shell-completions/zsh/_meson
     installShellCompletion --bash data/shell-completions/bash/meson
   '';
-
-  passthru = {
-    inherit python3;
-  };
 
   meta = with lib; {
     homepage = "https://mesonbuild.com";

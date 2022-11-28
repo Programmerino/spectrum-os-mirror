@@ -8,6 +8,14 @@
 , pythonOlder
 , cffi
 , pytestCheckHook
+, libiconv
+, stdenv
+  # for passthru.tests
+, asyncssh
+, django_4
+, fastapi
+, paramiko
+, twisted
 }:
 
 buildPythonPackage rec {
@@ -33,11 +41,14 @@ buildPythonPackage rec {
   nativeBuildInputs = [
     setuptools
     setuptools-rust
-    rustPlatform.cargoSetupHook
   ] ++ (with rustPlatform; [
+    cargoSetupHook
     rust.cargo
     rust.rustc
   ]);
+
+  # Remove when https://github.com/NixOS/nixpkgs/pull/190093 lands.
+  buildInputs = lib.optional stdenv.isDarwin libiconv;
 
   propagatedBuildInputs = [
     cffi
@@ -54,6 +65,10 @@ buildPythonPackage rec {
   pythonImportsCheck = [
     "bcrypt"
   ];
+
+  passthru.tests = {
+    inherit asyncssh django_4 fastapi paramiko twisted;
+  };
 
   meta = with lib; {
     description = "Modern password hashing for your software and your servers";

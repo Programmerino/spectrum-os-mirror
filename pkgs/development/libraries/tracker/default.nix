@@ -1,6 +1,7 @@
 { stdenv
 , lib
 , fetchurl
+, fetchpatch
 , gettext
 , meson
 , ninja
@@ -13,7 +14,6 @@
 , libxml2
 , glib
 , wrapGAppsNoGuiHook
-, vala
 , sqlite
 , libxslt
 , libstemmer
@@ -30,14 +30,22 @@
 
 stdenv.mkDerivation rec {
   pname = "tracker";
-  version = "3.3.2";
+  version = "3.4.1";
 
   outputs = [ "out" "dev" "devdoc" ];
 
   src = fetchurl {
     url = "mirror://gnome/sources/${pname}/${lib.versions.majorMinor version}/${pname}-${version}.tar.xz";
-    sha256 = "DtK5iRiVbW8WQpxgfdihTIT02gpIlw/S64yTq6PPmRM=";
+    sha256 = "6p1BqfucK0KtgPwsgjJ7XHE9WUyWmwnhpJvmP7dPT64=";
   };
+
+  patches = [
+    # Backport compatibility fix for newer SQLite.
+    (fetchpatch {
+      url = "https://gitlab.gnome.org/GNOME/tracker/-/merge_requests/552.patch";
+      sha256 = "1pmhhj47dbn654vb6a0kh5h6hw71lvaqxr141r60zrv5zx7m3sh9";
+    })
+  ];
 
   postPatch = ''
     patchShebangs utils/data-generators/cc/generate
@@ -50,7 +58,6 @@ stdenv.mkDerivation rec {
   nativeBuildInputs = [
     meson
     ninja
-    vala
     pkg-config
     asciidoc
     gettext

@@ -5,6 +5,7 @@
 , pythonOlder
 , python
 , click
+, dbus-python
 , desktop-notifier
 , dropbox
 , fasteners
@@ -40,6 +41,7 @@ buildPythonPackage rec {
   propagatedBuildInputs = [
     click
     desktop-notifier
+    dbus-python
     dropbox
     fasteners
     keyring
@@ -89,9 +91,10 @@ buildPythonPackage rec {
 
   meta = with lib; {
     description = "Open-source Dropbox client for macOS and Linux";
+    homepage = "https://maestral.app";
+    changelog = "https://github.com/samschott/maestral/releases/tag/v${version}";
     license = licenses.mit;
     maintainers = with maintainers; [ peterhoeg sfrijters ];
     platforms = platforms.unix;
-    homepage = "https://maestral.app";
   };
 }

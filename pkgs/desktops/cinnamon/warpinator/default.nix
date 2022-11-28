@@ -15,7 +15,7 @@
 
 python3.pkgs.buildPythonApplication rec  {
   pname = "warpinator";
-  version = "1.2.14";
+  version = "1.2.15";
 
   format = "other";
 
@@ -23,7 +23,7 @@ python3.pkgs.buildPythonApplication rec  {
     owner = "linuxmint";
     repo = pname;
     rev = version;
-    hash = "sha256-0OmrviDti843c+nvpt7ennSrso0PD7eZOJ94JiWJT58=";
+    hash = "sha256-WLeJTSf8906CjvJvBWnmFRVV1ngOuIK0V/3qZ82Bx7s=";
   };
 
   nativeBuildInputs = [
@@ -74,8 +74,6 @@ python3.pkgs.buildPythonApplication rec  {
   '';
 
   passthru.updateScript = gitUpdater {
-    inherit pname version;
-    attrPath = "cinnamon.warpinator";
     ignoredVersions = "^master.*";
   };
 
