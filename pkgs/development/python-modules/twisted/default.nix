@@ -10,7 +10,6 @@
 , automat
 , bcrypt
 , constantly
-, contextvars
 , cryptography
 , git
 , glibcLocales
@@ -109,6 +108,11 @@ buildPythonPackage rec {
   '' + lib.optionalString (stdenv.isAarch64 && stdenv.isDarwin) ''
     echo 'AbortConnectionTests_AsyncioSelectorReactorTests.test_fullWriteBufferAfterByteExchange.skip = "Timeout after 120 seconds"' >> src/twisted/internet/test/test_tcp.py
     echo 'AbortConnectionTests_AsyncioSelectorReactorTests.test_resumeProducingAbort.skip = "Timeout after 120 seconds"' >> src/twisted/internet/test/test_tcp.py
+
+    echo 'PosixReactorBaseTests.test_removeAllSkipsInternalReaders.skip = "Fails due to unclosed event loop"' >> src/twisted/internet/test/test_posixbase.py
+    echo 'PosixReactorBaseTests.test_wakerIsInternalReader.skip = "Fails due to unclosed event loop"' >> src/twisted/internet/test/test_posixbase.py
+
+    echo 'TCPPortTests.test_connectionLostFailed.skip = "Fails due to unclosed event loop"' >> src/twisted/internet/test/test_posixbase.py
   '';
 
   # Generate Twisted's plug-in cache. Twisted users must do it as well. See
@@ -139,7 +143,6 @@ buildPythonPackage rec {
     optional-dependencies = rec {
       conch = [ appdirs bcrypt cryptography pyasn1 ];
       conch_nacl = conch ++ [ pynacl ];
-      contextvars = lib.optionals (pythonOlder "3.7") [ contextvars ];
       http2 = [ h2 priority ];
       serial = [ pyserial ];
       tls = [ idna pyopenssl service-identity ];

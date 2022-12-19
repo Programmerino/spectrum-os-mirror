@@ -33,13 +33,14 @@ let
 in
 stdenv.mkDerivation rec {
   pname = if withGui then "bitcoin" else "bitcoind";
-  version = "24.0";
+  version = "24.0.1";
 
   src = fetchurl {
     urls = [
       "https://bitcoincore.org/bin/bitcoin-core-${version}/bitcoin-${version}.tar.gz"
     ];
-    sha256 = "9cfa4a9f4acb5093e85b8b528392f0f05067f3f8fafacd4dcfe8a396158fd9f4";
+    # hash retrieved from signed SHA256SUMS
+    sha256 = "12d4ad6dfab4767d460d73307e56d13c72997e114fad4f274650f95560f5f2ff";
   };
 
   nativeBuildInputs =
@@ -71,10 +72,6 @@ stdenv.mkDerivation rec {
     "--with-gui=qt5"
     "--with-qt-bindir=${qtbase.dev}/bin:${qttools.dev}/bin"
   ];
-
-  # fix "Killed: 9  test/test_bitcoin"
-  # https://github.com/NixOS/nixpkgs/issues/179474
-  hardeningDisable = lib.optionals (stdenv.isAarch64 && stdenv.isDarwin) [ "fortify" "stackprotector" ];
 
   checkInputs = [ python3 ];
 

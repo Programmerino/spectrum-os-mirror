@@ -1,14 +1,20 @@
-{ lib, fetchurl, fetchFromGitHub, installShellFiles, buildGoModule, go }:
+{ lib
+, fetchurl
+, fetchFromGitHub
+, installShellFiles
+, buildGoModule
+, go
+}:
 
 buildGoModule rec {
   pname = "fastly";
-  version = "4.3.0";
+  version = "4.5.0";
 
   src = fetchFromGitHub {
     owner = "fastly";
     repo = "cli";
-    rev = "v${version}";
-    sha256 = "sha256-TxN0DQ4OKfHn+u4ixpCgcyRRTs52IZRjgcbJuqajeVo=";
+    rev = "refs/tags/v${version}";
+    hash = "sha256-l/EnlyrSofuk4/69R2VUdP6MyKOVAOI7cIOW1TLeBww=";
     # The git commit is part of the `fastly version` original output;
     # leave that output the same in nixpkgs. Use the `.git` directory
     # to retrieve the commit SHA, and remove the directory afterwards,
@@ -21,11 +27,15 @@ buildGoModule rec {
     '';
   };
 
-  subPackages = [ "cmd/fastly" ];
+  subPackages = [
+    "cmd/fastly"
+  ];
 
-  vendorSha256 = "sha256-7EtyQYPe+oJmQ7uECbjkBjLnM9T03g6gFwUwebKuccc=";
+  vendorHash = "sha256-cXO5zhc9RZlweoU6pva2sBvcjNWBeFSUz+k9BbQpUX0=";
 
-  nativeBuildInputs = [ installShellFiles ];
+  nativeBuildInputs = [
+    installShellFiles
+  ];
 
   # Flags as provided by the build automation of the project:
   #   https://github.com/fastly/cli/blob/7844f9f54d56f8326962112b5534e5c40e91bf09/.goreleaser.yml#L14-L18
@@ -56,8 +66,9 @@ buildGoModule rec {
 
   meta = with lib; {
     description = "Command line tool for interacting with the Fastly API";
-    license = licenses.asl20;
     homepage = "https://github.com/fastly/cli";
+    changelog = "https://github.com/fastly/cli/blob/v${version}/CHANGELOG.md";
+    license = licenses.asl20;
     maintainers = with maintainers; [ ereslibre shyim ];
   };
 }
