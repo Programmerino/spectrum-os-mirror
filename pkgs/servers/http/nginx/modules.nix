@@ -1,4 +1,36 @@
-{ config, fetchFromGitHub, fetchFromGitLab, fetchhg, lib, pkgs }:
+{ lib
+, config
+, fetchFromGitHub
+, fetchFromGitLab
+, fetchhg
+, fetchpatch
+, runCommand
+
+, arpa2common
+, brotli
+, curl
+, expat
+, fdk_aac
+, ffmpeg
+, geoip
+, libbsd
+, libiconv
+, libmaxminddb
+, libmodsecurity
+, libuuid
+, libxml2
+, lmdb
+, luajit
+, msgpuck
+, openssl
+, opentracing-cpp
+, pam
+, psol
+, which
+, yajl
+, zlib
+, zstd
+}:
 
 let
 
@@ -31,7 +63,7 @@ let self = {
       rev = "34fd0c94d2c43c642f323491c4f4a226cd83b962";
       sha256 = "0yf34s11vgkcl03wbl6gjngm3p9hs8vvm7hkjkwhjh39vkk2a7cy";
     };
-    inputs = [ pkgs.openssl ];
+    inputs = [ openssl ];
   };
 
   auth-a2aclr = {
@@ -44,7 +76,7 @@ let self = {
       sha256 = "sha256-h2LgMhreCgod+H/bNQzY9BvqG9ezkwikwWB3T6gHH04=";
     };
     inputs = [
-      (pkgs.arpa2common.overrideAttrs
+      (arpa2common.overrideAttrs
         (old: rec {
           version = "0.7.1";
 
@@ -71,19 +103,19 @@ let self = {
 
   brotli = {
     name = "brotli";
-    src = let gitsrc = pkgs.fetchFromGitHub {
+    src = let src' = fetchFromGitHub {
       name = "brotli";
       owner = "google";
       repo = "ngx_brotli";
-      rev = "25f86f0bac1101b6512135eac5f93c49c63609e3";
-      sha256 = "02hfvfa6milj40qc2ikpb9f95sxqvxk4hly3x74kqhysbdi06hhv";
+      rev = "6e975bcb015f62e1f303054897783355e2a877dc";
+      sha256 = "sha256-G0IDYlvaQzzJ6cNTSGbfuOuSXFp3RsEwIJLGapTbDgo=";
     }; in
-      pkgs.runCommand "ngx_brotli-src" { } ''
-        cp -a ${gitsrc} $out
+      runCommand "brotli" { } ''
+        cp -a ${src'} $out
         substituteInPlace $out/filter/config \
-          --replace '$ngx_addon_dir/deps/brotli/c' ${lib.getDev pkgs.brotli}
+          --replace '$ngx_addon_dir/deps/brotli/c' ${lib.getDev brotli}
       '';
-    inputs = [ pkgs.brotli ];
+    inputs = [ brotli ];
   };
 
   cache-purge = {
@@ -117,7 +149,7 @@ let self = {
       rev = "v3.0.0";
       sha256 = "000dm5zk0m1hm1iq60aff5r6y8xmqd7djrwhgnz9ig01xyhnjv9w";
     };
-    inputs = [ pkgs.expat ];
+    inputs = [ expat ];
   };
 
   develkit = {
@@ -173,10 +205,10 @@ let self = {
       name = "geoip2";
       owner = "leev";
       repo = "ngx_http_geoip2_module";
-      rev = "3.3";
-      sha256 = "EEn/qxPsBFgVBqOgPYTrRhaLPwSBlSPWYYSr3SL8wZA=";
+      rev = "3.4";
+      sha256 = "CAs1JZsHY7RymSBYbumC2BENsXtZP3p4ljH5QKwz5yg=";
     };
-    inputs = [ pkgs.libmaxminddb ];
+    inputs = [ libmaxminddb ];
 
     meta = {
       maintainers = with lib.maintainers; [ pinpox ];
@@ -201,7 +233,7 @@ let self = {
         rev = "v1.0.1";
         sha256 = "0qcx15c8wbsmyz2hkmyy5yd7qn1n84kx9amaxnfxkpqi05vzm1zz";
       } + "/ipscrub";
-    inputs = [ pkgs.libbsd ];
+    inputs = [ libbsd ];
   };
 
   limit-speed = {
@@ -226,19 +258,33 @@ let self = {
     };
   };
 
-  lua = {
+  lua = rec {
     name = "lua";
     src = fetchFromGitHub {
       name = "lua";
       owner = "openresty";
       repo = "lua-nginx-module";
-      rev = "v0.10.15";
-      sha256 = "1j216isp0546hycklbr5wi8mlga5hq170hk7f2sm16sfavlkh5gz";
+      rev = "v0.10.22";
+      sha256 = "sha256-TyeTL7/0dI2wS2eACS4sI+9tu7UpDq09aemMaklkUss=";
     };
-    inputs = [ pkgs.luajit ];
-    preConfigure = ''
-      export LUAJIT_LIB="${pkgs.luajit}/lib"
-      export LUAJIT_INC="${pkgs.luajit}/include/luajit-2.0"
+    inputs = [ luajit ];
+    preConfigure = let
+      # fix compilation against nginx 1.23.0
+      nginx-1-23-patch = fetchpatch {
+        url = "https://github.com/openresty/lua-nginx-module/commit/b6d167cf1a93c0c885c28db5a439f2404874cb26.patch";
+        sha256 = "sha256-l7GHFNZXg+RG2SIBjYJO1JHdGUtthWnzLIqEORJUNr4=";
+      };
+    in ''
+      export LUAJIT_LIB="${luajit}/lib"
+      export LUAJIT_INC="$(realpath ${luajit}/include/luajit-*)"
+
+      # make source directory writable to allow generating src/ngx_http_lua_autoconf.h
+      lua_src=$TMPDIR/lua-src
+      cp -r "${src}/" "$lua_src"
+      chmod -R +w "$lua_src"
+      patch -p1 -d $lua_src -i ${nginx-1-23-patch}
+      export configureFlags="''${configureFlags//"${src}"/"$lua_src"}"
+      unset lua_src
     '';
     allowMemoryWriteExecute = true;
   };
@@ -252,7 +298,7 @@ let self = {
       rev = "v0.07";
       sha256 = "1gqccg8airli3i9103zv1zfwbjm27h235qjabfbfqk503rjamkpk";
     };
-    inputs = [ pkgs.luajit ];
+    inputs = [ luajit ];
     allowMemoryWriteExecute = true;
   };
 
@@ -265,7 +311,7 @@ let self = {
       rev = "v1.0.3";
       sha256 = "sha256-xp0/eqi5PJlzb9NaUbNnzEqNcxDPyjyNwZOwmlv1+ag=";
     };
-    inputs = [ pkgs.curl pkgs.geoip pkgs.libmodsecurity pkgs.libxml2 pkgs.lmdb pkgs.yajl ];
+    inputs = [ curl geoip libmodsecurity libxml2 lmdb yajl ];
     disableIPC = true;
   };
 
@@ -306,8 +352,8 @@ let self = {
     name = "njs";
     src = fetchhg {
       url = "https://hg.nginx.org/njs";
-      rev = "0.7.8";
-      sha256 = "sha256-jsR8EOeW8tAo2utKznuUaCG4hK0oU0ZJSnnGmI5HUDk=";
+      rev = "0.7.10";
+      sha256 = "sha256-/yKzY+BUFxLk8bWo+mqKfRVRsC2moe+WvhaRYIGdr6Y=";
       name = "nginx-njs";
     };
 
@@ -322,7 +368,7 @@ let self = {
       unset NJS_SOURCE_DIR
     '';
 
-    inputs = [ pkgs.which ];
+    inputs = [ which ];
   };
 
   opentracing = {
@@ -336,42 +382,33 @@ let self = {
         sha256 = "1q234s3p55xv820207dnh4fcxkqikjcq5rs02ai31ylpmfsf0kkb";
       };
       in "${src'}/opentracing";
-    inputs = [ pkgs.opentracing-cpp ];
+    inputs = [ opentracing-cpp ];
   };
 
-  pagespeed =
-    let
-      version = pkgs.psol.version;
-
+  pagespeed = {
+    name = "pagespeed";
+    src = let
       moduleSrc = fetchFromGitHub {
         name = "pagespeed";
         owner = "pagespeed";
         repo = "ngx_pagespeed";
-        rev = "v${version}-stable";
+        rev = "v${psol.version}-stable";
         sha256 = "0ry7vmkb2bx0sspl1kgjlrzzz6lbz07313ks2lr80rrdm2zb16wp";
       };
-
-      ngx_pagespeed = pkgs.runCommand
-        "ngx_pagespeed"
-        {
-          meta = {
-            description = "PageSpeed module for Nginx";
-            homepage = "https://developers.google.com/speed/pagespeed/module/";
-            license = pkgs.lib.licenses.asl20;
-          };
-        }
-        ''
-          cp -r "${moduleSrc}" "$out"
-          chmod -R +w "$out"
-          ln -s "${pkgs.psol}" "$out/psol"
-        '';
-    in
-    {
-      name = "pagespeed";
-      src = ngx_pagespeed;
-      inputs = [ pkgs.zlib pkgs.libuuid ]; # psol deps
-      allowMemoryWriteExecute = true;
-    };
+    in runCommand "ngx_pagespeed" {
+      meta = {
+        description = "PageSpeed module for Nginx";
+        homepage = "https://developers.google.com/speed/pagespeed/module/";
+        license = lib.licenses.asl20;
+      };
+    } ''
+      cp -r "${moduleSrc}" "$out"
+      chmod -R +w "$out"
+      ln -s "${psol}" "$out/psol"
+    '';
+    inputs = [ zlib libuuid ]; # psol deps
+    allowMemoryWriteExecute = true;
+  };
 
   pam = {
     name = "pam";
@@ -382,7 +419,7 @@ let self = {
       rev = "v1.5.3";
       sha256 = "sha256:09lnljdhjg65643bc4535z378lsn4llbq67zcxlln0pizk9y921a";
     };
-    inputs = [ pkgs.pam ];
+    inputs = [ pam ];
   };
 
   pinba = {
@@ -427,7 +464,7 @@ let self = {
       rev = "95bdc0d1aca06ea7fe42555f71e65910bd74914d";
       sha256 = "19wzck1xzq4kz7nyabcwzlank1k7wi7w2wn2c1mwz374c79g8ggp";
     };
-    inputs = [ pkgs.openssl ];
+    inputs = [ openssl ];
   };
 
   set-misc = {
@@ -582,7 +619,7 @@ let self = {
       rev = "v2.7.1";
       sha256 = "0ya4330in7zjzqw57djv4icpk0n1j98nvf0f8v296yi9rjy054br";
     };
-    inputs = [ pkgs.msgpuck.dev pkgs.yajl ];
+    inputs = [ msgpuck.dev yajl ];
   };
 
   url = {
@@ -605,7 +642,7 @@ let self = {
       rev = "92b80642538eec4cfc98114dec5917b8d820e912";
       sha256 = "0a8d9ifryhhnll7k7jcsf9frshk5yhpsgz7zgxdmw81wbz5hxklc";
     };
-    inputs = [ pkgs.ffmpeg ];
+    inputs = [ ffmpeg ];
   };
 
   vod = {
@@ -617,7 +654,7 @@ let self = {
       rev = "1.29";
       sha256 = "1z0ka0cwqbgh3fv2d5yva395sf90626rdzx7lyfrgs89gy4h9nrr";
     };
-    inputs = with pkgs; [ ffmpeg fdk_aac openssl libxml2 libiconv ];
+    inputs = [ ffmpeg fdk_aac openssl libxml2 libiconv ];
   };
 
   vts = {
@@ -629,6 +666,19 @@ let self = {
       rev = "v0.2.1";
       sha256 = "sha256-x4ry5ljPeJQY+7Mp04/xYIGf22d6Nee7CSqHezdK4gQ=";
     };
+  };
+
+  zstd = {
+    name = "zstd";
+    src = fetchFromGitHub {
+      name = "zstd";
+      owner = "tokers";
+      repo = "zstd-nginx-module";
+      rev = "25d88c262be47462cf90015ee7ebf6317b6848f9";
+      sha256 = "sha256-YRluKekhx1tb6e5IL1FPK05jPtzfQPaHI47cdada928=";
+    };
+
+    inputs = [ zstd ];
   };
 }; in self // lib.optionalAttrs config.allowAliases {
   # deprecated or renamed packages

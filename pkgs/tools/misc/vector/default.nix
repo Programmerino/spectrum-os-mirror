@@ -28,12 +28,12 @@
     # building on linux fails without this feature flag (both x86_64 and AArch64)
     ++ lib.optionals enableKafka [ "rdkafka?/gssapi-vendored" ]
     ++ lib.optional stdenv.targetPlatform.isUnix "unix")
+, nix-update-script
 }:
 
 let
   pname = "vector";
-  pinData = lib.importJSON ./pin.json;
-  version = pinData.version;
+  version = "0.28.1";
 in
 rustPlatform.buildRustPackage {
   inherit pname version;
@@ -42,10 +42,19 @@ rustPlatform.buildRustPackage {
     owner = "vectordotdev";
     repo = pname;
     rev = "v${version}";
-    sha256 = pinData.sha256;
+    sha256 = "sha256-hBEw5sAxex4o/b1nr60dEwZs7nosXU7pUChT1VoI25k=";
   };
 
-  cargoSha256 = pinData.cargoSha256;
+  cargoLock = {
+    lockFile = ./Cargo.lock;
+    outputHashes = {
+      "azure_core-0.5.0" = "sha256-fojO7dhntpymMjV58TtYb7N4UN6rOp30D54x09RDXfQ=";
+      "chrono-0.4.22" = "sha256-c5xHLte0+NpM+UUHEwxu2qdBFUBw62YN9vNkD12llwI=";
+      "heim-0.1.0-rc.1" = "sha256-ODKEQ1udt7FlxI5fvoFMG7C2zmM45eeEYDUEaLTsdYo=";
+      "tokio-util-0.7.4" = "sha256-rAzj44O+GOZhG+o6FVN5qCcG/NWxW8fUpScm+xsRjIs=";
+      "tracing-0.2.0" = "sha256-YAxeEofFA43PX2hafh3RY+C81a2v6n1fGzYz2FycC3M=";
+    };
+  };
   nativeBuildInputs = [ pkg-config cmake perl ];
   buildInputs = [ oniguruma openssl protobuf rdkafka zstd ]
     ++ lib.optionals stdenv.isDarwin [ Security libiconv coreutils CoreServices ];
@@ -103,14 +112,16 @@ rustPlatform.buildRustPackage {
     ''}
   '';
 
-  passthru = { inherit features; };
+  passthru = {
+    inherit features;
+    updateScript = nix-update-script { };
+  };
 
   meta = with lib; {
-    description = "A high-performance logs, metrics, and events router";
-    homepage = "https://github.com/timberio/vector";
-    license = with licenses; [ asl20 ];
+    description = "A high-performance observability data pipeline";
+    homepage = "https://github.com/vectordotdev/vector";
+    license = licenses.mpl20;
     maintainers = with maintainers; [ thoughtpolice happysalada ];
     platforms = with platforms; all;
   };
 }
-

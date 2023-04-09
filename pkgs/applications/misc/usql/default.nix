@@ -1,5 +1,4 @@
 { lib
-, stdenv
 , fetchFromGitHub
 , buildGoModule
 , unixODBC
@@ -11,18 +10,18 @@
 
 buildGoModule rec {
   pname = "usql";
-  version = "0.13.1";
+  version = "0.14.0";
 
   src = fetchFromGitHub {
     owner = "xo";
     repo = "usql";
     rev = "v${version}";
-    hash = "sha256-bdejXGyvY+HAE4sOxhsZYZ5fCISEVxvfOlEjL/CgBLQ=";
+    hash = "sha256-AYo1sRzsOuyv0p3X8/TmsWdCBq3Gcqo0J6+B2aI7UIo=";
   };
 
   buildInputs = [ unixODBC icu ];
 
-  vendorHash = "sha256-+4eRdr5MY9d0ordaDv8hZf4wGoZsp14MpOEp1vhr75w=";
+  vendorHash = "sha256-ro/m9t8vHxyAS+a42/OkaqhrUs0FPGu0Ns9tn5HyKXg=";
   proxyVendor = true;
 
   # Exclude broken impala & hive driver
@@ -42,6 +41,7 @@ buildGoModule rec {
     "sqlite_fts5"
     "sqlite_introspect"
     "sqlite_json1"
+    "sqlite_math_functions"
     "sqlite_stat4"
     "sqlite_userauth"
     "sqlite_vtable"
@@ -59,9 +59,7 @@ buildGoModule rec {
   doCheck = false;
 
   passthru = {
-    updateScript = nix-update-script {
-      attrPath = pname;
-    };
+    updateScript = nix-update-script { };
     tests.version = testers.testVersion {
       inherit version;
       package = usql;

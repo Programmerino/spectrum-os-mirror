@@ -24,6 +24,8 @@ in stdenv.mkDerivation {
     sha256 = "sha256-viwrS9lnaU8sTGuzK/+L/PlMM/xRRtgVuK5pixVeDEw=";
   };
 
+  patches = [ ./0001-Fix-test.patch ];
+
   hardeningEnable = [ "pie" ];
 
   configurePhase = ''
@@ -33,6 +35,9 @@ in stdenv.mkDerivation {
   '';
 
   enableParallelBuilding = true;
+
+  separateDebugInfo = true;
+    # debugging requires information for both the unikernel and the tender
 
   installPhase = ''
     runHook preInstall
@@ -52,7 +57,7 @@ in stdenv.mkDerivation {
   '';
 
   doCheck = stdenv.hostPlatform.isLinux;
-  checkInputs = [ util-linux qemu ];
+  nativeCheckInputs = [ util-linux qemu ];
   checkPhase = ''
     runHook preCheck
     patchShebangs tests

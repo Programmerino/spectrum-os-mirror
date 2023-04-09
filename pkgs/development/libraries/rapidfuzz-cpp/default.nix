@@ -29,11 +29,11 @@ stdenv.mkDerivation rec {
     "-include algorithm"
   ];
 
-  checkInputs = [
+  nativeCheckInputs = [
     catch2_3
   ];
 
-  doCheck = true;
+  doCheck = stdenv.buildPlatform.canExecute stdenv.hostPlatform;
 
   meta = {
     description = "Rapid fuzzy string matching in C++ using the Levenshtein Distance";

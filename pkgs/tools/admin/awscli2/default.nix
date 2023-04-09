@@ -11,13 +11,16 @@
 let
   py = python3.override {
     packageOverrides = self: super: {
-      awscrt = super.awscrt.overridePythonAttrs (oldAttrs: rec {
-        version = "0.14.0";
+      ipython = super.ipython.overridePythonAttrs (oldAttrs: rec {
+        pname = "ipython";
+        version = "8.5.0";
+
         src = self.fetchPypi {
-          inherit (oldAttrs) pname;
-          inherit version;
-          hash = "sha256-MGLTFcsWVC/gTdgjny6LwyOO6QRc1QcLkVzy677Lqqw=";
+          inherit pname version;
+          sha256 = "sha256-CXvfXNh1dv0GYXnJ9/IIAE96aGTuGyDzfTRsC8sJn4Q=";
         };
+
+        disabledTests = [ "testIPythonLexer" ] ++ oldAttrs.disabledTests;
       });
 
       prompt-toolkit = super.prompt-toolkit.overridePythonAttrs (oldAttrs: rec {
@@ -34,15 +37,23 @@ let
 in
 with py.pkgs; buildPythonApplication rec {
   pname = "awscli2";
-  version = "2.9.6"; # N.B: if you change this, check if overrides are still up-to-date
+  version = "2.11.6"; # N.B: if you change this, check if overrides are still up-to-date
   format = "pyproject";
 
   src = fetchFromGitHub {
     owner = "aws";
     repo = "aws-cli";
     rev = version;
-    hash = "sha256-3zB0Uy2pmkrOLb+/mXZGs/pnzo6zi2zVPyeNPGPVQJM=";
+    hash = "sha256-6VEDGakOx2LJcDbBKicxxfOt0t2tf2iaRXkx1Em0Ieg=";
   };
+
+  postPatch = ''
+    substituteInPlace requirements/bootstrap.txt \
+      --replace "pip>=22.0.0,<23.0.0" "pip>=22.0.0,<24.0.0"
+    substituteInPlace pyproject.toml \
+      --replace "distro>=1.5.0,<1.6.0" "distro>=1.5.0" \
+      --replace "cryptography>=3.3.2,<38.0.5" "cryptography>=3.3.2"
+  '';
 
   nativeBuildInputs = [
     flit-core
@@ -66,18 +77,11 @@ with py.pkgs; buildPythonApplication rec {
     urllib3
   ];
 
-  checkInputs = [
+  nativeCheckInputs = [
     jsonschema
     mock
     pytestCheckHook
   ];
-
-  postPatch = ''
-    sed -i pyproject.toml \
-      -e 's/colorama.*/colorama",/' \
-      -e 's/cryptography.*/cryptography",/' \
-      -e 's/distro.*/distro",/'
-  '';
 
   postInstall = ''
     mkdir -p $out/${python3.sitePackages}/awscli/data
@@ -119,7 +123,8 @@ with py.pkgs; buildPythonApplication rec {
   passthru = {
     python = py; # for aws_shell
     updateScript = nix-update-script {
-      attrPath = pname;
+      # Excludes 1.x versions from the Github tags list
+      extraArgs = [ "--version-regex" "^(2\.(.*))" ];
     };
     tests.version = testers.testVersion {
       package = awscli2;

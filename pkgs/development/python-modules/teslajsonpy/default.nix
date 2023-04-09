@@ -6,16 +6,18 @@
 , buildPythonPackage
 , fetchFromGitHub
 , httpx
+, orjson
 , poetry-core
 , pytest-asyncio
 , pytestCheckHook
 , pythonOlder
+, tenacity
 , wrapt
 }:
 
 buildPythonPackage rec {
   pname = "teslajsonpy";
-  version = "3.5.1";
+  version = "3.8.0";
   format = "pyproject";
 
   disabled = pythonOlder "3.7";
@@ -24,7 +26,7 @@ buildPythonPackage rec {
     owner = "zabuldon";
     repo = pname;
     rev = "refs/tags/v${version}";
-    hash = "sha256-rLpjzH5YI+pTW5SxPOqXXnjDxWv0SBzShOvuBXbvF4c=";
+    hash = "sha256-JKKHLg99hl2XnqRfBCT0t9QyQEY1YEwBsKb3pB5CNRA=";
   };
 
   nativeBuildInputs = [
@@ -37,10 +39,12 @@ buildPythonPackage rec {
     backoff
     beautifulsoup4
     httpx
+    orjson
+    tenacity
     wrapt
   ];
 
-  checkInputs = [
+  nativeCheckInputs = [
     pytest-asyncio
     pytestCheckHook
   ];

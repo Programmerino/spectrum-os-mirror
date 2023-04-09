@@ -16,7 +16,7 @@
 
 buildPythonPackage rec {
   pname = "fakeredis";
-  version = "2.2.0";
+  version = "2.10.3";
   format = "pyproject";
 
   disabled = pythonOlder "3.7";
@@ -25,7 +25,7 @@ buildPythonPackage rec {
     owner = "dsoftwareinc";
     repo = "fakeredis-py";
     rev = "refs/tags/v${version}";
-    hash = "sha256-W24DMVp3E6SYaVTUYCRDm/tLaGcjDqecO3rN1RO/J84=";
+    hash = "sha256-qd8tofR5FdfV/A37gfNRYALf5rUMh7ldhS/hETUHo/k=";
   };
 
   nativeBuildInputs = [
@@ -38,7 +38,7 @@ buildPythonPackage rec {
     sortedcontainers
   ];
 
-  checkInputs = [
+  nativeCheckInputs = [
     hypothesis
     pytest-asyncio
     pytest-mock

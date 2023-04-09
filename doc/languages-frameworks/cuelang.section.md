@@ -7,7 +7,7 @@
 - do configuration akin to [Dhall Lang](https://dhall-lang.org/)
 - perform data validation
 
-## Cuelang schema quick start
+## Cuelang schema quick start {#cuelang-quickstart}
 
 Cuelang schemas are similar to JSON, here is a quick cheatsheet:
 
@@ -21,7 +21,7 @@ Cuelang schemas are similar to JSON, here is a quick cheatsheet:
 - Read <https://cuelang.org/docs/concepts/logic/> to learn more about the semantics.
 - Read <https://cuelang.org/docs/references/spec/> to learn about the language specification.
 
-## `writeCueValidator`
+## `writeCueValidator` {#cuelang-writeCueValidator}
 
 Nixpkgs provides a `pkgs.writeCueValidator` helper, which will write a validation script based on the provided Cuelang schema.
 
@@ -37,9 +37,9 @@ pkgs.writeCueValidator
 ```
 
 - The first parameter is the Cue schema file.
-- The second paramter is an options parameter, currently, only: `document` can be passed.
+- The second parameter is an options parameter, currently, only: `document` can be passed.
 
-`document` : match your input data against this fragment of structure or definition, e.g. you may use the same schema file but differents documents based on the data you are validating.
+`document` : match your input data against this fragment of structure or definition, e.g. you may use the same schema file but different documents based on the data you are validating.
 
 Another example, given the following `validator.nix` :
 ```

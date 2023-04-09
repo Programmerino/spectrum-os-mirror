@@ -44,10 +44,10 @@
 , p7zip
 , xgamma
 , libstrangle
-, wine
 , fluidsynth
 , xorgserver
 , xorg
+, util-linux
 }:
 
 let
@@ -63,27 +63,16 @@ let
     p7zip
     xgamma
     libstrangle
-    wine
     fluidsynth
     xorgserver
     xorg.setxkbmap
     xorg.xkbcomp
+    # bypass mount suid wrapper which does not work in fhsenv
+    util-linux
   ];
-
-  binPath = lib.makeBinPath requiredTools;
-
-  gstDeps = with gst_all_1; [
-    gst-libav
-    gst-plugins-bad
-    gst-plugins-base
-    gst-plugins-good
-    gst-plugins-ugly
-    gstreamer
-  ];
-
 in
 buildPythonApplication rec {
-  pname = "lutris-original";
+  pname = "lutris-unwrapped";
   version = "0.5.12";
 
   src = fetchFromGitHub {
@@ -93,18 +82,24 @@ buildPythonApplication rec {
     sha256 = "sha256-rsiXm7L/M85ot6NrTyy//lMRFlLPJYve9y6Erg9Ugxg=";
   };
 
-  nativeBuildInputs = [ wrapGAppsHook ];
+  nativeBuildInputs = [ wrapGAppsHook gobject-introspection ];
   buildInputs = [
     atk
     gdk-pixbuf
     glib-networking
     gnome-desktop
-    gobject-introspection
     gtk3
     libnotify
     pango
     webkitgtk
-  ] ++ gstDeps;
+  ] ++ (with gst_all_1; [
+    gst-libav
+    gst-plugins-bad
+    gst-plugins-base
+    gst-plugins-good
+    gst-plugins-ugly
+    gstreamer
+  ]);
 
   # See `install_requires` in https://github.com/lutris/lutris/blob/master/setup.py
   propagatedBuildInputs = [
@@ -125,24 +120,22 @@ buildPythonApplication rec {
       --replace "'libmagic.so.1'" "'${lib.getLib file}/lib/libmagic.so.1'"
   '';
 
-
-  checkInputs = [ xvfb-run nose2 flake8 ] ++ requiredTools;
-  preCheck = "export HOME=$PWD";
+  nativeCheckInputs = [ xvfb-run nose2 flake8 ] ++ requiredTools;
   checkPhase = ''
     runHook preCheck
+
+    export HOME=$PWD
     xvfb-run -s '-screen 0 800x600x24' make test
+
     runHook postCheck
   '';
 
   # avoid double wrapping
   dontWrapGApps = true;
   makeWrapperArgs = [
-    "--prefix PATH : ${binPath}"
+    "--prefix PATH : ${lib.makeBinPath requiredTools}"
     "\${gappsWrapperArgs[@]}"
   ];
-  # needed for glib-schemas to work correctly (will crash on dialogues otherwise)
-  # see https://github.com/NixOS/nixpkgs/issues/56943
-  strictDeps = false;
 
   meta = with lib; {
     homepage = "https://lutris.net";

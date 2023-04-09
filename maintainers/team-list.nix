@@ -81,6 +81,7 @@ with lib.maintainers; {
     # Verify additions to this team with at least one already existing member of the team.
     members = [
       cdepillabout
+      wraithm
     ];
     scope = "Group registration for packages maintained by Bitnomial.";
     shortName = "Bitnomial employees";
@@ -141,6 +142,7 @@ with lib.maintainers; {
       # gares has no entry in the maintainers list
       siraben
       vbgl
+      alizter
     ];
     scope = "Maintain the Coq theorem prover and related packages.";
     shortName = "Coq";
@@ -166,6 +168,15 @@ with lib.maintainers; {
     ];
     scope = "Maintain the Cosmopolitan LibC and related programs.";
     shortName = "Cosmopolitan";
+  };
+
+  deepin = {
+    members = [
+      rewine
+    ];
+    scope = "Maintain deepin desktop environment and related packages.";
+    shortName = "DDE";
+    enableFeatureFreezePing = true;
   };
 
   deshaw = {
@@ -210,6 +221,7 @@ with lib.maintainers; {
 
   docs = {
     members = [
+      asymmetric
       ryantm
     ];
     scope = "Maintain nixpkgs/NixOS documentation and tools for building it.";
@@ -276,10 +288,13 @@ with lib.maintainers; {
 
   golang = {
     members = [
-      c00w
       kalbasit
       mic92
       zowoq
+      qbit
+    ];
+    githubTeams = [
+      "golang"
     ];
     scope = "Maintain Golang compilers.";
     shortName = "Go";
@@ -300,6 +315,19 @@ with lib.maintainers; {
     scope = "Maintain GNOME desktop environment and platform.";
     shortName = "GNOME";
     enableFeatureFreezePing = true;
+  };
+
+  graalvm-ce = {
+    members = [
+      bandresen
+      hlolli
+      glittershark
+      babariviere
+      ericdallo
+      thiagokokada
+    ];
+    scope = "Maintain GraalVM Community Edition packages.";
+    shortName = "GraalVM-CE";
   };
 
   haskell = {
@@ -395,6 +423,37 @@ with lib.maintainers; {
     ];
     scope = "Maintain the Linux kernel.";
     shortName = "Linux Kernel";
+  };
+
+  lisp = {
+    members = [
+      raskin
+      lukego
+      nagy
+      uthar
+    ];
+    githubTeams = [
+      "lisp"
+    ];
+    scope = "Maintain the Lisp ecosystem.";
+    shortName = "lisp";
+    enableFeatureFreezePing = true;
+  };
+
+  llvm = {
+    members = [
+      dtzWill
+      ericson2314
+      lovek323
+      primeos
+      qyliss
+      raitobezarius
+      rrbutani
+      sternenseemann
+    ];
+    scope = "Maintain LLVM package sets and related packages";
+    shortName = "LLVM";
+    enableFeatureFreezePing = true;
   };
 
   lumiguide = {
@@ -675,10 +734,14 @@ with lib.maintainers; {
 
   rust = {
     members = [
-      andir
-      lnl7
+      figsoda
       mic92
+      tjni
+      winter
       zowoq
+    ];
+    githubTeams = [
+      "rust"
     ];
     scope = "Maintain the Rust compiler toolchain and nixpkgs integration.";
     shortName = "Rust";
@@ -755,6 +818,7 @@ with lib.maintainers; {
   xfce = {
     members = [
       romildo
+      muscaln
     ];
     scope = "Maintain Xfce desktop environment and related packages.";
     shortName = "Xfce";

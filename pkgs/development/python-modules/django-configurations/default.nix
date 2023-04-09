@@ -21,7 +21,7 @@ buildPythonPackage rec {
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "sha256-IrmWTmtlfa/Ho1QQoRXSDxRRFJqCc3rcbDMew2WIgZY=";
+    hash = "sha256-IrmWTmtlfa/Ho1QQoRXSDxRRFJqCc3rcbDMew2WIgZY=";
   };
 
   buildInputs = [
@@ -34,7 +34,7 @@ buildPythonPackage rec {
     importlib-metadata
   ];
 
-  checkInputs = [
+  nativeCheckInputs = [
     mock
     dj-database-url
     dj-email-url

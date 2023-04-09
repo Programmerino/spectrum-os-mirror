@@ -1,21 +1,21 @@
-{ lib, buildGoModule, fetchFromGitHub }:
+{ lib, buildGoModule, fetchFromGitHub, nix-update-script }:
 
 let
-  pinData = lib.importJSON ./pin.json;
-in
-buildGoModule rec {
   pname = "erigon";
-  version = pinData.version;
+  version = "2.42.0";
+in
+buildGoModule {
+  inherit pname version;
 
   src = fetchFromGitHub {
     owner = "ledgerwatch";
     repo = pname;
     rev = "v${version}";
-    sha256 = pinData.sha256;
+    sha256 = "sha256-M2u8/WKo1yZu27KjTJhJFqycCxCopJqtVQpIs9inswI=";
     fetchSubmodules = true;
   };
 
-  vendorSha256 = pinData.vendorSha256;
+  vendorSha256 = "sha256-Vyurf4wSN4zSDjcH8FC+OOiviiSjRVF4RId/eqFDd+c=";
   proxyVendor = true;
 
   # Build errors in mdbx when format hardening is enabled:
@@ -28,6 +28,8 @@ buildGoModule rec {
     "cmd/rpcdaemon"
     "cmd/rlpdump"
   ];
+
+  passthru.updateScript = nix-update-script { };
 
   meta = with lib; {
     homepage = "https://github.com/ledgerwatch/erigon/";

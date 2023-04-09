@@ -1,5 +1,5 @@
 { lib
-, buildGoModule
+, buildGo120Module
 , fetchFromGitHub
 , fetchNpmDeps
 , cacert
@@ -14,22 +14,22 @@
 , stdenv
 }:
 
-buildGoModule rec {
+buildGo120Module rec {
   pname = "evcc";
-  version = "0.109.2";
+  version = "0.115.0";
 
   src = fetchFromGitHub {
     owner = "evcc-io";
     repo = pname;
     rev = version;
-    hash = "sha256-/Mklf+F9OHq56Qj/kn8JpRAgWwCZqwsH9EwrBFdi/mQ=";
+    hash = "sha256-vA2HpkzNuHulUUZKL6Wm2Y052v4JdC5V8hADq78rK5c=";
   };
 
-  vendorHash = "sha256-H3ACmang+DPOCnccHLG6YzKvi7Rf5k8RkJDD1CgGBrw=";
+  vendorHash = "sha256-/TqA2WTNJ3cSrqLgEly1KHGvMA/MQ+p364G0ne0ezfQ=";
 
   npmDeps = fetchNpmDeps {
     inherit src;
-    hash = "sha256-oxoENlZNThW1PrwcGwiNP5Q7BZyhhtuCwXFey0t3Kz8=";
+    hash = "sha256-LGlM+itulqtlwyVKfVGiZtTpcCmx+lVvE3JOFkYRHXk=";
   };
 
   nativeBuildInputs = [
@@ -62,10 +62,6 @@ buildGoModule rec {
     "-w"
   ];
 
-  npmInstallFlags = [
-    "--legacy-peer-deps"
-  ];
-
   preBuild = ''
     make ui
   '';
@@ -75,15 +71,17 @@ buildGoModule rec {
   preCheck = ''
     # requires network access
     rm meter/template_test.go
+    rm charger/template_test.go
+    rm vehicle/template_test.go
+    # times out (since 0.115.0, bisected to 31ab90e6381b30278731bd01effa62bdfb884ebc)
+    rm util/templates/render_testing.go
   '';
 
   passthru = {
     tests = {
       inherit (nixosTests) evcc;
     };
-    updateScript = nix-update-script {
-      attrPath = pname;
-    };
+    updateScript = nix-update-script { };
   };
 
   meta = with lib; {

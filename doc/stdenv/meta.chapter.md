@@ -66,7 +66,7 @@ For details, see [Licenses](#sec-meta-license).
 
 ### `maintainers` {#var-meta-maintainers}
 
-A list of the maintainers of this Nix expression. Maintainers are defined in [`nixpkgs/maintainers/maintainer-list.nix`](https://github.com/NixOS/nixpkgs/blob/master/maintainers/maintainer-list.nix). There is no restriction to becoming a maintainer, just add yourself to that list in a separate commit titled “maintainers: add alice”, and reference maintainers with `maintainers = with lib.maintainers; [ alice bob ]`.
+A list of the maintainers of this Nix expression. Maintainers are defined in [`nixpkgs/maintainers/maintainer-list.nix`](https://github.com/NixOS/nixpkgs/blob/master/maintainers/maintainer-list.nix). There is no restriction to becoming a maintainer, just add yourself to that list in a separate commit titled “maintainers: add alice” in the same pull request, and reference maintainers with `maintainers = with lib.maintainers; [ alice bob ]`.
 
 ### `mainProgram` {#var-meta-mainProgram}
 
@@ -101,7 +101,7 @@ $ cd path/to/nixpkgs
 $ nix-build -A your-package.tests
 ```
 
-#### Package tests
+#### Package tests {#var-meta-tests-packages}
 
 Tests that are part of the source package are often executed in the `installCheckPhase`.
 
@@ -113,7 +113,7 @@ Prefer `passthru.tests` for tests that are introduced in nixpkgs because:
 
 For more on how to write and run package tests, see <xref linkend="sec-package-tests"/>.
 
-#### NixOS tests
+#### NixOS tests {#var-meta-tests-nixos}
 
 The NixOS tests are available as `nixosTests` in parameters of derivations. For instance, the OpenSMTPD derivation includes lines similar to:
 

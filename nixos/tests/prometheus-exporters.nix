@@ -1060,6 +1060,20 @@ let
       '';
     };
 
+    shelly = {
+      exporterConfig = {
+        enable = true;
+        metrics-file = "${pkgs.writeText "test.json" ''{}''}";
+      };
+      exporterTest = ''
+        wait_for_unit("prometheus-shelly-exporter.service")
+        wait_for_open_port(9784)
+        wait_until_succeeds(
+            "curl -sSf 'localhost:9784/metrics'"
+        )
+      '';
+    };
+
     script = {
       exporterConfig = {
         enable = true;
@@ -1169,6 +1183,25 @@ let
         wait_for_unit("prometheus-sql-exporter.service")
         wait_for_open_port(9237)
         succeed("curl http://localhost:9237/metrics | grep -c 'sql_points{' | grep 2")
+      '';
+    };
+
+    statsd = {
+      exporterConfig = {
+        enable = true;
+      };
+      exporterTest = ''
+        wait_for_unit("prometheus-statsd-exporter.service")
+        wait_for_open_port(9102)
+        succeed("curl http://localhost:9102/metrics | grep 'statsd_exporter_build_info{'")
+        succeed(
+          "echo 'test.udp:1|c' > /dev/udp/localhost/9125",
+          "curl http://localhost:9102/metrics | grep 'test_udp 1'",
+        )
+        succeed(
+          "echo 'test.tcp:1|c' > /dev/tcp/localhost/9125",
+          "curl http://localhost:9102/metrics | grep 'test_tcp 1'",
+        )
       '';
     };
 

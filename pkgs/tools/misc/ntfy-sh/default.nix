@@ -10,16 +10,16 @@ let
 in
 buildGoModule rec {
   pname = "ntfy-sh";
-  version = "1.29.1";
+  version = "2.3.1";
 
   src = fetchFromGitHub {
     owner = "binwiederhier";
     repo = "ntfy";
     rev = "v${version}";
-    sha256 = "sha256-ikXhST+fvXu7FBeoYMzPq2LhpAw3gfaES1WlhnRO8BY=";
+    sha256 = "sha256-A3kL/1Q7BFGfzVn4wFrQf9VS+2rOgS4u8o1uEQI2vcw=";
   };
 
-  vendorSha256 = "sha256-VVqaQFluqV77/+Asu9xSBpCvoYr276UE3Yg+iNkxP0o=";
+  vendorSha256 = "sha256-0bmZmBYEHGIP9vd8O5rz0JyuKUu9VHeb8ErZ6VNsfxQ=";
 
   doCheck = false;
 
@@ -32,6 +32,7 @@ buildGoModule rec {
     python3
     python3Packages.mkdocs-material
     python3Packages.mkdocs-minify
+    python3Packages.mkdocs-simple-hooks
   ];
 
   postPatch = ''

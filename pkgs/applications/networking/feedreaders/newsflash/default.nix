@@ -17,23 +17,26 @@
 , glib-networking
 , librsvg
 , gst_all_1
+, gitUpdater
 }:
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "newsflash";
-  version = "2.2.3";
+  version = "2.2.4";
 
   src = fetchFromGitLab {
     owner = "news-flash";
     repo = "news_flash_gtk";
     rev = "refs/tags/v.${finalAttrs.version}";
-    sha256 = "sha256-ms0CVYSYccRuiLBZ+lEEyMH0Zhti5sMM49XuEUe9sKw=";
+    sha256 = "sha256-civHj8a5LYV3XaAjSJBdn15+8sdO/yLlWBXCNW56plA=";
   };
 
-  cargoDeps = rustPlatform.fetchCargoTarball {
-    name = "${finalAttrs.pname}-${finalAttrs.version}";
-    src = finalAttrs.src;
-    sha256 = "sha256-QbjXjdKMjGwXQ3DoyAJN1SxnHjVeAk140j1me/iWlZQ=";
+  cargoDeps = rustPlatform.importCargoLock {
+    lockFile = ./Cargo.lock;
+    outputHashes = {
+      "news-flash-2.2.2" = "sha256-LN5VhJk+NGTR0fohI0LmfeLDS9IkfVE7IFIzmSPF4u0=";
+      "newsblur_api-0.2.0" = "sha256-+3AobEX+RtBRgX1TIr4rRX0ngJvNVp1oXzkbhppi73M=";
+    };
   };
 
   patches = [
@@ -86,6 +89,10 @@ stdenv.mkDerivation (finalAttrs: {
     gst-plugins-good
     gst-plugins-bad
   ]);
+
+  passthru.updateScript = gitUpdater {
+    rev-prefix = "v.";
+  };
 
   meta = with lib; {
     description = "A modern feed reader designed for the GNOME desktop";

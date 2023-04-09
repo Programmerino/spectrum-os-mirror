@@ -18,17 +18,16 @@
 
 buildPythonPackage rec {
   pname = "rapidfuzz";
-  version = "2.13.6";
+  version = "2.14.0";
+  format = "pyproject";
 
   disabled = pythonOlder "3.7";
-
-  format = "pyproject";
 
   src = fetchFromGitHub {
     owner = "maxbachmann";
     repo = "RapidFuzz";
     rev = "refs/tags/v${version}";
-    hash = "sha256-TvauQ5U3+xF01HuYsnmuPn3uqoDSg42vYk2qR9AdBIg=";
+    hash = "sha256-qZfVr1V7YBuMoFiMwRoEVosof6kCSiIb944gXzPn4P0=";
   };
 
   nativeBuildInputs = [
@@ -52,9 +51,9 @@ buildPythonPackage rec {
     export CMAKE_ARGS="-DCMAKE_CXX_COMPILER_AR=$AR -DCMAKE_CXX_COMPILER_RANLIB=$RANLIB"
   '';
 
-  NIX_CFLAGS_COMPILE = lib.optionals (stdenv.cc.isClang && stdenv.isDarwin) [
+  env.NIX_CFLAGS_COMPILE = toString (lib.optionals (stdenv.cc.isClang && stdenv.isDarwin) [
     "-fno-lto"  # work around https://github.com/NixOS/nixpkgs/issues/19098
-  ];
+  ]);
 
   propagatedBuildInputs = [
     numpy
@@ -64,10 +63,15 @@ buildPythonPackage rec {
     export RAPIDFUZZ_IMPLEMENTATION=cpp
   '';
 
-  checkInputs = [
+  nativeCheckInputs = [
     hypothesis
     pandas
     pytestCheckHook
+  ];
+
+  disabledTests = lib.optionals (stdenv.isDarwin && stdenv.isx86_64) [
+    # segfaults
+    "test_cdist"
   ];
 
   pythonImportsCheck = [

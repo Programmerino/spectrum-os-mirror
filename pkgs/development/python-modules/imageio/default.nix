@@ -16,12 +16,12 @@
 
 buildPythonPackage rec {
   pname = "imageio";
-  version = "2.22.4";
+  version = "2.27.0";
   disabled = pythonOlder "3.7";
 
   src = fetchPypi {
-    sha256 = "sha256-D64Cet3wK8icc6VswVethFV/i4uEqhm0y3Bv78otiP8=";
     inherit pname version;
+    hash = "sha256-7iaclXeF7wNzzHpzIxhZVtg+wF5s3yC0KgO6e3SsWMY=";
   };
 
   patches = [
@@ -37,7 +37,7 @@ buildPythonPackage rec {
     pillow
   ];
 
-  checkInputs = [
+  nativeCheckInputs = [
     fsspec
     psutil
     pytestCheckHook

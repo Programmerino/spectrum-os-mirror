@@ -21,10 +21,13 @@ with pkgs;
   cc-wrapper-clang-9 = callPackage ./cc-wrapper { stdenv = llvmPackages_9.stdenv; };
   cc-wrapper-libcxx-9 = callPackage ./cc-wrapper { stdenv = llvmPackages_9.libcxxStdenv; };
   stdenv-inputs = callPackage ./stdenv-inputs { };
+  stdenv = callPackage ./stdenv { };
 
   config = callPackage ./config.nix { };
 
   haskell = callPackage ./haskell { };
+
+  hooks = callPackage ./hooks { };
 
   cc-multilib-gcc = callPackage ./cc-wrapper/multilib.nix { stdenv = gccMultiStdenv; };
   cc-multilib-clang = callPackage ./cc-wrapper/multilib.nix { stdenv = clangMultiStdenv; };
@@ -48,6 +51,8 @@ with pkgs;
 
   php = recurseIntoAttrs (callPackages ./php {});
 
+  pkg-config = recurseIntoAttrs (callPackage ../top-level/pkg-config/tests.nix { });
+
   rustCustomSysroot = callPackage ./rust-sysroot {};
   buildRustCrate = callPackage ../build-support/rust/build-rust-crate/test { };
   importCargoLock = callPackage ../build-support/rust/test/import-cargo-lock { };
@@ -56,7 +61,7 @@ with pkgs;
 
   nixos-functions = callPackage ./nixos-functions {};
 
-  patch-shebangs = callPackage ./patch-shebangs {};
+  overriding = callPackage ./overriding.nix { };
 
   texlive = callPackage ./texlive {};
 
@@ -80,6 +85,8 @@ with pkgs;
   cue-validation = callPackage ./cue {};
 
   coq = callPackage ./coq {};
+
+  makeHardcodeGsettingsPatch = callPackage ./make-hardcode-gsettings-patch { };
 
   makeWrapper = callPackage ./make-wrapper { };
   makeBinaryWrapper = callPackage ./make-binary-wrapper {

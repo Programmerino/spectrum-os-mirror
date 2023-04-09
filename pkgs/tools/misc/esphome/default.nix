@@ -1,4 +1,5 @@
 { lib
+, callPackage
 , python3
 , fetchFromGitHub
 , platformio
@@ -13,16 +14,16 @@ let
     };
   };
 in
-with python.pkgs; buildPythonApplication rec {
+python.pkgs.buildPythonApplication rec {
   pname = "esphome";
-  version = "2022.12.1";
+  version = "2023.3.1";
   format = "setuptools";
 
   src = fetchFromGitHub {
     owner = pname;
     repo = pname;
     rev = "refs/tags/${version}";
-    hash = "sha256-gDAwZhfkXMqU4dbowpPhNl52Kg3Kx9lgBNzhzkQPrN0=";
+    hash = "sha256-h35V6tg6TewqJiZ4T5t6RNNaT2JEzqhbnJgH6xqqqzs=";
   };
 
   postPatch = ''
@@ -42,7 +43,7 @@ with python.pkgs; buildPythonApplication rec {
   # They have validation functions like:
   # - validate_cryptography_installed
   # - validate_pillow_installed
-  propagatedBuildInputs = [
+  propagatedBuildInputs = with python.pkgs; [
     aioesphomeapi
     click
     colorama
@@ -52,6 +53,7 @@ with python.pkgs; buildPythonApplication rec {
     kconfiglib
     paho-mqtt
     pillow
+    platformio
     protobuf
     pyserial
     pyyaml
@@ -70,12 +72,11 @@ with python.pkgs; buildPythonApplication rec {
     "--set ESPHOME_USE_SUBPROCESS ''"
   ];
 
-  checkInputs = [
+  nativeCheckInputs = with python.pkgs; [
     hypothesis
     mock
     pytest-asyncio
     pytest-mock
-    pytest-sugar
     pytestCheckHook
   ];
 
@@ -91,7 +92,7 @@ with python.pkgs; buildPythonApplication rec {
   '';
 
   passthru = {
-    dashboard = esphome-dashboard;
+    dashboard = python.pkgs.esphome-dashboard;
     updateScript = callPackage ./update.nix {};
   };
 

@@ -12,7 +12,7 @@
 
 buildPythonPackage rec {
   pname = "aioesphomeapi";
-  version = "13.0.2";
+  version = "13.6.1";
   format = "setuptools";
 
   disabled = pythonOlder "3.9";
@@ -21,13 +21,8 @@ buildPythonPackage rec {
     owner = "esphome";
     repo = pname;
     rev = "refs/tags/v${version}";
-    hash = "sha256-z1QFAKvkJuOH2utYertORca5PpW43VS3YB2mhjBsh+A=";
+    hash = "sha256-S2a5v4OeE0DC9J2JAHFQ6YyhWt6RXp3cP+zkONp+Bzc=";
   };
-
-  postPatch = ''
-    substituteInPlace requirements.txt \
-      --replace "protobuf>=3.12.2,<4.0" "protobuf>=3.12.2"
-  '';
 
   propagatedBuildInputs = [
     noiseprotocol
@@ -35,7 +30,7 @@ buildPythonPackage rec {
     zeroconf
   ];
 
-  checkInputs = [
+  nativeCheckInputs = [
     mock
     pytest-asyncio
     pytestCheckHook

@@ -9,22 +9,18 @@ in
 
 rustPlatform.buildRustPackage rec {
   pname = "vaultwarden";
-  version = "1.26.0";
+  version = "1.28.0";
 
   src = fetchFromGitHub {
     owner = "dani-garcia";
     repo = pname;
     rev = version;
-    sha256 = "sha256-LPIc1odUBvjVJty3GYYFNhile4XBWMisLUeVtWH6xgE=";
+    hash = "sha256-ML5eblQUk4xMYbBeLxk9tNxi7N4ltrCjMG0oM9zL6JI=";
   };
 
-  cargoSha256 = "sha256-IfseODaoqlPNBlVjS+9+rKXAOq29TgULMA/ogmqg0NA=";
-
-  postPatch = ''
-    # Upstream specifies 1.57; nixpkgs has 1.56 which also produces a working
-    # vaultwarden when using RUSTC_BOOTSTRAP=1
-    sed -ri 's/^rust-version = .*//g' Cargo.toml
-  '';
+  cargoLock = {
+    lockFile = ./Cargo.lock;
+  };
 
   nativeBuildInputs = [ pkg-config ];
   buildInputs = with lib; [ openssl ]
@@ -47,7 +43,7 @@ rustPlatform.buildRustPackage rec {
   meta = with lib; {
     description = "Unofficial Bitwarden compatible server written in Rust";
     homepage = "https://github.com/dani-garcia/vaultwarden";
-    license = licenses.gpl3Only;
+    license = licenses.agpl3Only;
     maintainers = with maintainers; [ msteen ivan ];
   };
 }

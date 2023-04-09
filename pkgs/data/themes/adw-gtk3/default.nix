@@ -30,16 +30,14 @@ stdenvNoCC.mkDerivation rec {
   '';
 
   passthru = {
-    updateScript = nix-update-script {
-      attrPath = pname;
-    };
+    updateScript = nix-update-script { };
   };
 
   meta = with lib; {
     description = "The theme from libadwaita ported to GTK-3";
     homepage = "https://github.com/lassekongo83/adw-gtk3";
     license = licenses.lgpl21Only;
-    platforms = platforms.linux;
+    platforms = platforms.unix;
     maintainers = with maintainers; [ ciferkey ];
   };
 }
