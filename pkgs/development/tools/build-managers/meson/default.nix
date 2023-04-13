@@ -84,12 +84,12 @@ python3.pkgs.buildPythonApplication rec {
   cpuFamily = with stdenv.targetPlatform;
     /**/ if isAarch32 then "arm"
     else if isx86_32  then "x86"
-    else stdenv.targetPlatform.uname.processor;
+    else uname.processor;
 
   crossFile = if stdenv.hostPlatform == stdenv.targetPlatform then null else
     builtins.toFile "cross-file.conf" ''
       [properties]
-      needs_exe_wrapper = true
+      needs_exe_wrapper = ${lib.boolToString (!stdenv.hostPlatform.canExecute stdenv.targetPlatform)}
 
       [host_machine]
       system = '${stdenv.targetPlatform.parsed.kernel.name}'
