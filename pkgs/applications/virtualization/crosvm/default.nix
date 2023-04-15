@@ -21,6 +21,8 @@ rustPlatform.buildRustPackage rec {
       decode = "base64 -d";
       hash = "sha256-oRwGprs/P2ZG8BM9CMzyEyM8fjuyFINQw4rjTq9rKXA=";
     })
+
+    ./0001-devices-gpu-don-t-require-backend-req-fd-up-front.patch
   ];
 
   separateDebugInfo = true;
