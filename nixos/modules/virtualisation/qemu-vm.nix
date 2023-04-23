@@ -214,11 +214,11 @@ let
               mkdir $out
               diskImage=$out/disk.img
               ${qemu}/bin/qemu-img create -f qcow2 $diskImage "120M"
-              ${if cfg.useEFIBoot then ''
+              ${lib.optionalString cfg.useEFIBoot ''
                 efiVars=$out/efi-vars.fd
                 cp ${cfg.efi.variables} $efiVars
                 chmod 0644 $efiVars
-              '' else ""}
+              ''}
             '';
           buildInputs = [ pkgs.util-linux ];
           QEMU_OPTS = "-nographic -serial stdio -monitor none"
@@ -1069,12 +1069,12 @@ in
           fsType = "ext4";
           autoFormat = true;
         });
-        "/tmp" = lib.mkIf config.boot.tmpOnTmpfs {
+        "/tmp" = lib.mkIf config.boot.tmp.useTmpfs {
           device = "tmpfs";
           fsType = "tmpfs";
           neededForBoot = true;
           # Sync with systemd's tmp.mount;
-          options = [ "mode=1777" "strictatime" "nosuid" "nodev" "size=${toString config.boot.tmpOnTmpfsSize}" ];
+          options = [ "mode=1777" "strictatime" "nosuid" "nodev" "size=${toString config.boot.tmp.tmpfsSize}" ];
         };
         "/nix/${if cfg.writableStore then ".ro-store" else "store"}" = lib.mkIf cfg.useNixStoreImage {
           device = "${lookupDriveDeviceName "nix-store" cfg.qemu.drives}";
