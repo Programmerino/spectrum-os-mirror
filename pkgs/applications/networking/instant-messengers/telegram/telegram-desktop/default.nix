@@ -73,7 +73,7 @@ let
 in
 stdenv.mkDerivation rec {
   pname = "telegram-desktop";
-  version = "4.8.0";
+  version = "4.8.1";
   # Note: Update via pkgs/applications/networking/instant-messengers/telegram/tdesktop/update.py
 
   src = fetchFromGitHub {
@@ -81,7 +81,7 @@ stdenv.mkDerivation rec {
     repo = "tdesktop";
     rev = "v${version}";
     fetchSubmodules = true;
-    sha256 = "1ari4kdjd99klrla0rn4cjjc54d6glf17s0q881f67vh2v5zdwf0";
+    sha256 = "0mxxfh70dffkrq76nky3pwrk10s1q4ahxx2ddb58dz8igq6pl4zi";
   };
 
   patches = [
@@ -181,10 +181,7 @@ stdenv.mkDerivation rec {
       "''${gappsWrapperArgs[@]}" \
       "''${qtWrapperArgs[@]}" \
       --prefix LD_LIBRARY_PATH : "${xorg.libXcursor}/lib" \
-      --suffix PATH : ${lib.makeBinPath [ xdg-utils ]} \
-      --set XDG_RUNTIME_DIR "XDG-RUNTIME-DIR"
-    sed -i $out/bin/telegram-desktop \
-      -e "s,'XDG-RUNTIME-DIR',\"\''${XDG_RUNTIME_DIR:-/run/user/\$(id --user)}\","
+      --suffix PATH : ${lib.makeBinPath [ xdg-utils ]}
   '';
 
   passthru = {
