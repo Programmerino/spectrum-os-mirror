@@ -9,6 +9,8 @@ let
     inherit ocaml;
 
     ### A ###
+    aches = callPackage ../development/ocaml-modules/aches { };
+    aches-lwt = callPackage ../development/ocaml-modules/aches/lwt.nix { };
 
     afl-persistent = callPackage ../development/ocaml-modules/afl-persistent { };
 
@@ -37,6 +39,8 @@ let
     apron = callPackage ../development/ocaml-modules/apron { };
 
     arp = callPackage ../development/ocaml-modules/arp { };
+
+    asetmap = callPackage ../development/ocaml-modules/asetmap { };
 
     asn1-combinators = callPackage ../development/ocaml-modules/asn1-combinators { };
 
@@ -100,7 +104,7 @@ let
 
     bls12-381 = callPackage ../development/ocaml-modules/bls12-381 { };
     bls12-381-gen = callPackage ../development/ocaml-modules/bls12-381/gen.nix { };
-    bls12-381-legacy = callPackage ../development/ocaml-modules/bls12-381/legacy.nix { };
+    bls12-381-hash = callPackage ../development/ocaml-modules/bls12-381-hash { };
 
     bls12-381-signature = callPackage ../development/ocaml-modules/bls12-381-signature { };
 
@@ -191,6 +195,8 @@ let
     cil = callPackage ../development/ocaml-modules/cil { };
 
     class_group_vdf = callPackage ../development/ocaml-modules/class_group_vdf { };
+
+    cmarkit = callPackage ../development/ocaml-modules/cmarkit { };
 
     # The 1.1.0 release broke a lot of packages and is not compatible with
     # OCaml < 4.08.
@@ -567,6 +573,11 @@ let
       git-binary = pkgs.git;
     };
 
+    github = callPackage ../development/ocaml-modules/github {  };
+    github-data = callPackage ../development/ocaml-modules/github/data.nix {  };
+    github-jsoo = callPackage ../development/ocaml-modules/github/jsoo.nix {  };
+    github-unix = callPackage ../development/ocaml-modules/github/unix.nix {  };
+
     gluten = callPackage ../development/ocaml-modules/gluten { };
     gluten-lwt = callPackage ../development/ocaml-modules/gluten/lwt.nix { };
     gluten-lwt-unix = callPackage ../development/ocaml-modules/gluten/lwt-unix.nix { };
@@ -845,6 +856,10 @@ let
 
     linksem = callPackage ../development/ocaml-modules/linksem { };
 
+    linol = callPackage ../development/ocaml-modules/linol { };
+
+    linol-lwt = callPackage ../development/ocaml-modules/linol/lwt.nix { };
+
     llvm = callPackage ../development/ocaml-modules/llvm {
       libllvm = pkgs.llvmPackages_10.libllvm;
     };
@@ -1094,10 +1109,7 @@ let
 
     ocaml_cryptgps = callPackage ../development/ocaml-modules/cryptgps { };
 
-    ocaml_expat =
-      if lib.versionAtLeast ocaml.version "4.02"
-        then callPackage ../development/ocaml-modules/expat { }
-        else callPackage ../development/ocaml-modules/expat/0.9.nix { };
+    ocaml_expat = callPackage ../development/ocaml-modules/expat { };
 
     ocaml-freestanding = callPackage ../development/ocaml-modules/ocaml-freestanding { };
 
@@ -1303,6 +1315,8 @@ let
       inherit (pkgs) coreutils imagemagick;
     };
 
+    polynomial = callPackage ../development/ocaml-modules/polynomial { };
+
     portaudio = callPackage ../development/ocaml-modules/portaudio {
       inherit (pkgs) portaudio;
     };
@@ -1340,6 +1354,8 @@ let
     ppx_deriving_cmdliner = callPackage ../development/ocaml-modules/ppx_deriving_cmdliner {};
 
     ppx_deriving_protobuf = callPackage ../development/ocaml-modules/ppx_deriving_protobuf {};
+
+    ppx_deriving_qcheck = callPackage ../development/ocaml-modules/qcheck/ppx_deriving_qcheck.nix {};
 
     ppx_deriving_rpc = callPackage ../development/ocaml-modules/ppx_deriving_rpc { };
 
@@ -1379,6 +1395,8 @@ let
     printbox-text = callPackage ../development/ocaml-modules/printbox/text.nix { };
 
     process = callPackage ../development/ocaml-modules/process { };
+
+    prometheus = callPackage ../development/ocaml-modules/prometheus { };
 
     progress = callPackage ../development/ocaml-modules/progress { };
 
@@ -1452,7 +1470,6 @@ let
     rfc7748 = callPackage ../development/ocaml-modules/rfc7748 { };
 
     ringo = callPackage ../development/ocaml-modules/ringo { };
-    ringo-lwt = callPackage ../development/ocaml-modules/ringo/lwt.nix { };
 
     rock = callPackage ../development/ocaml-modules/rock { };
 

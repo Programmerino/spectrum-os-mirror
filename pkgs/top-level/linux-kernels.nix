@@ -130,6 +130,7 @@ in {
       kernelPatches = [
         kernelPatches.bridge_stp_helper
         kernelPatches.request_key_helper
+        kernelPatches.CVE-2023-32233
       ];
     };
 
@@ -145,6 +146,7 @@ in {
         kernelPatches.bridge_stp_helper
         kernelPatches.request_key_helper
         kernelPatches.export-rt-sched-migrate
+        kernelPatches.CVE-2023-32233
       ];
     };
 
@@ -178,14 +180,6 @@ in {
         kernelPatches.request_key_helper
         kernelPatches.fix-em-ice-bonding
         kernelPatches.export-rt-sched-migrate
-      ];
-    };
-
-    linux_6_2 = callPackage ../os-specific/linux/kernel/linux-6.2.nix {
-      kernelPatches = [
-        kernelPatches.bridge_stp_helper
-        kernelPatches.request_key_helper
-        kernelPatches.fix-em-ice-bonding
       ];
     };
 
@@ -279,6 +273,7 @@ in {
     linux_5_18 = throw "linux 5.18 was removed because it has reached its end of life upstream";
     linux_5_19 = throw "linux 5.19 was removed because it has reached its end of life upstream";
     linux_6_0 = throw "linux 6.0 was removed because it has reached its end of life upstream";
+    linux_6_2 = throw "linux 6.2 was removed because it has reached its end of life upstream";
 
     linux_xanmod_tt = throw "linux_xanmod_tt was removed because upstream no longer offers this option";
 
@@ -502,6 +497,8 @@ in {
 
     system76-io = callPackage ../os-specific/linux/system76-io { };
 
+    system76-scheduler = callPackage ../os-specific/linux/system76-scheduler { };
+
     tmon = callPackage ../os-specific/linux/tmon { };
 
     tp_smapi = callPackage ../os-specific/linux/tp_smapi { };
@@ -545,10 +542,14 @@ in {
 
     zenpower = callPackage ../os-specific/linux/zenpower { };
 
-    inherit (callPackage ../os-specific/linux/zfs {
-        configFile = "kernel";
-        inherit pkgs kernel;
-      }) zfsStable zfsUnstable;
+    zfsStable = callPackage ../os-specific/linux/zfs/stable.nix {
+      configFile = "kernel";
+      inherit pkgs kernel;
+    };
+    zfsUnstable = callPackage ../os-specific/linux/zfs/unstable.nix {
+      configFile = "kernel";
+      inherit pkgs kernel;
+    };
     zfs = zfsStable;
 
     can-isotp = callPackage ../os-specific/linux/can-isotp { };
@@ -572,13 +573,13 @@ in {
     linux_5_10 = recurseIntoAttrs (packagesFor kernels.linux_5_10);
     linux_5_15 = recurseIntoAttrs (packagesFor kernels.linux_5_15);
     linux_6_1 = recurseIntoAttrs (packagesFor kernels.linux_6_1);
-    linux_6_2 = recurseIntoAttrs (packagesFor kernels.linux_6_2);
     linux_6_3 = recurseIntoAttrs (packagesFor kernels.linux_6_3);
   } // lib.optionalAttrs config.allowAliases {
     linux_4_9 = throw "linux 4.9 was removed because it will reach its end of life within 22.11"; # Added 2022-11-08
     linux_5_18 = throw "linux 5.18 was removed because it reached its end of life upstream"; # Added 2022-09-17
     linux_5_19 = throw "linux 5.19 was removed because it reached its end of life upstream"; # Added 2022-11-01
     linux_6_0 = throw "linux 6.0 was removed because it reached its end of life upstream"; # Added 2023-01-20
+    linux_6_2 = throw "linux 6.2 was removed because it reached its end of life upstream"; # Added 2023-05-26
   };
 
   rtPackages = {

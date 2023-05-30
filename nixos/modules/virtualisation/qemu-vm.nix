@@ -130,7 +130,7 @@ let
           ${concatStringsSep " \\\n" ([ "-f qcow2" ]
           ++ optional (cfg.useBootLoader && cfg.useDefaultFilesystems) "-F qcow2 -b ${systemImage}/nixos.qcow2"
           ++ optional (!(cfg.useBootLoader && cfg.useDefaultFilesystems)) "-o size=${toString config.virtualisation.diskSize}M"
-          ++ [ "$NIX_DISK_IMAGE" ])}
+          ++ [ ''"$NIX_DISK_IMAGE"'' ])}
           echo "Virtualisation disk image created."
       fi
 
@@ -169,18 +169,26 @@ let
       # Create a directory for exchanging data with the VM.
       mkdir -p "$TMPDIR/xchg"
 
-      ${lib.optionalString cfg.useBootLoader
+      ${lib.optionalString cfg.useEFIBoot
       ''
+        # Expose EFI variables, it's useful even when we are not using a bootloader (!).
+        # We might be interested in having EFI variable storage present even if we aren't booting via UEFI, hence
+        # no guard against `useBootLoader`.  Examples:
+        # - testing PXE boot or other EFI applications
+        # - directbooting LinuxBoot, which `kexec()s` into a UEFI environment that can boot e.g. Windows
         NIX_EFI_VARS=$(readlink -f "''${NIX_EFI_VARS:-${config.system.name}-efi-vars.fd}")
-
-        ${lib.optionalString cfg.useEFIBoot
-        ''
-          # VM needs writable EFI vars
-          if ! test -e "$NIX_EFI_VARS"; then
-            cp ${systemImage}/efi-vars.fd "$NIX_EFI_VARS"
-            chmod 0644 "$NIX_EFI_VARS"
-          fi
-        ''}
+        # VM needs writable EFI vars
+        if ! test -e "$NIX_EFI_VARS"; then
+        ${if cfg.useBootLoader then
+            # We still need the EFI var from the make-disk-image derivation
+            # because our "switch-to-configuration" process might
+            # write into it and we want to keep this data.
+            ''cp ${systemImage}/efi-vars.fd "$NIX_EFI_VARS"''
+            else
+            ''cp ${cfg.efi.variables} "$NIX_EFI_VARS"''
+          }
+          chmod 0644 "$NIX_EFI_VARS"
+        fi
       ''}
 
       cd "$TMPDIR"
@@ -556,7 +564,8 @@ in
     virtualisation.vlans =
       mkOption {
         type = types.listOf types.ints.unsigned;
-        default = [ 1 ];
+        default = if config.virtualisation.interfaces == {} then [ 1 ] else [ ];
+        defaultText = lib.literalExpression ''if config.virtualisation.interfaces == {} then [ 1 ] else [ ]'';
         example = [ 1 2 ];
         description =
           lib.mdDoc ''
@@ -570,6 +579,35 @@ in
             in the list of VMs.
           '';
       };
+
+    virtualisation.interfaces = mkOption {
+      default = {};
+      example = {
+        enp1s0.vlan = 1;
+      };
+      description = lib.mdDoc ''
+        Network interfaces to add to the VM.
+      '';
+      type = with types; attrsOf (submodule {
+        options = {
+          vlan = mkOption {
+            type = types.ints.unsigned;
+            description = lib.mdDoc ''
+              VLAN to which the network interface is connected.
+            '';
+          };
+
+          assignIP = mkOption {
+            type = types.bool;
+            default = false;
+            description = lib.mdDoc ''
+              Automatically assign an IP address to the network interface using the same scheme as
+              virtualisation.vlans.
+            '';
+          };
+        };
+      });
+    };
 
     virtualisation.writableStore =
       mkOption {
@@ -855,7 +893,13 @@ in
                   The address must be in the default VLAN (10.0.2.0/24).
               '';
           }
-        ]));
+        ])) ++ [
+          { assertion = pkgs.stdenv.hostPlatform.is32bit -> cfg.memorySize < 2047;
+            message = ''
+              virtualisation.memorySize is above 2047, but qemu is only able to allocate 2047MB RAM on 32bit max.
+            '';
+          }
+        ];
 
     warnings =
       optional (

@@ -11,6 +11,7 @@
 , spaceNavSupport ? stdenv.isLinux, libspnav
 , makeWrapper
 , pugixml, llvmPackages, SDL, Cocoa, CoreGraphics, ForceFeedback, OpenAL, OpenGL
+, waylandSupport ? stdenv.isLinux, pkg-config, wayland, wayland-protocols, libffi, libdecor, libxkbcommon, dbus
 , potrace
 , openxr-loader
 , embree, gmp, libharu
@@ -27,20 +28,20 @@ let
 in
 stdenv.mkDerivation rec {
   pname = "blender";
-  version = "3.4.1";
+  version = "3.5.1";
 
   src = fetchurl {
     url = "https://download.blender.org/source/${pname}-${version}.tar.xz";
-    hash = "sha256-JHxMEignDJAQ9HIcmFy1tiirUKvPnyZ4Ywc3FC7rkcM=";
+    hash = "sha256-vXQox+bLpakAIWJpwyER3/qrrxvbVHLyMZZeYVF0qAk=";
   };
 
-  patches = [
-    # remove with 3.5.X
-    ./blender-numpy.patch
-  ] ++ lib.optional stdenv.isDarwin ./darwin.patch;
+  patches = lib.optional stdenv.isDarwin ./darwin.patch;
 
-  nativeBuildInputs = [ cmake makeWrapper python310Packages.wrapPython llvmPackages.llvm.dev ]
-    ++ lib.optionals cudaSupport [ addOpenGLRunpath ];
+  nativeBuildInputs =
+    [ cmake makeWrapper python310Packages.wrapPython llvmPackages.llvm.dev
+    ]
+    ++ lib.optionals cudaSupport [ addOpenGLRunpath ]
+    ++ lib.optionals waylandSupport [ pkg-config ];
   buildInputs =
     [ boost ffmpeg gettext glew ilmbase
       freetype libjpeg libpng libsamplerate libsndfile libtiff libwebp
@@ -53,6 +54,9 @@ stdenv.mkDerivation rec {
       potrace
       libharu
       libepoxy
+    ]
+    ++ lib.optionals waylandSupport [
+      wayland wayland-protocols libffi libdecor libxkbcommon dbus
     ]
     ++ lib.optionals (!stdenv.isAarch64) [
       openimagedenoise
@@ -127,6 +131,12 @@ stdenv.mkDerivation rec {
       "-DWITH_IMAGE_OPENJPEG=ON"
       "-DWITH_OPENCOLLADA=${if colladaSupport then "ON" else "OFF"}"
     ]
+    ++ lib.optionals waylandSupport [
+      "-DWITH_GHOST_WAYLAND=ON"
+      "-DWITH_GHOST_WAYLAND_DBUS=ON"
+      "-DWITH_GHOST_WAYLAND_DYNLOAD=OFF"
+      "-DWITH_GHOST_WAYLAND_LIBDECOR=ON"
+    ]
     ++ lib.optionals stdenv.hostPlatform.isAarch64 [
       "-DWITH_CYCLES_EMBREE=OFF"
     ]
@@ -173,6 +183,8 @@ stdenv.mkDerivation rec {
     done
   '';
 
+  passthru = { inherit python; };
+
   meta = with lib; {
     description = "3D Creation/Animation/Publishing System";
     homepage = "https://www.blender.org";
@@ -181,6 +193,7 @@ stdenv.mkDerivation rec {
     # OptiX, enabled with cudaSupport, is non-free.
     license = with licenses; [ gpl2Plus ] ++ optional cudaSupport unfree;
     platforms = [ "x86_64-linux" "x86_64-darwin" "aarch64-linux" ];
+    broken = stdenv.isDarwin;
     maintainers = with maintainers; [ goibhniu veprbl ];
   };
 }

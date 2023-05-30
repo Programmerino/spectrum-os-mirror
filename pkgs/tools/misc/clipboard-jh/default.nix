@@ -4,6 +4,7 @@
 , cmake
 , libffi
 , pkg-config
+, patchelf
 , wayland-protocols
 , wayland
 , xorg
@@ -12,13 +13,13 @@
 
 stdenv.mkDerivation rec {
   pname = "clipboard-jh";
-  version = "0.6.0";
+  version = "0.7.1";
 
   src = fetchFromGitHub {
     owner = "Slackadays";
     repo = "clipboard";
     rev = version;
-    hash = "sha256-o3yCWAy7hlFKAFW3tVRG+hL0SRWlNY4hvnhUoDK8GkI=";
+    hash = "sha256-RLb7R4BXnP7J5gX8hsE9yi6N3kezsutP1HqkmjR3yRs=";
   };
 
   postPatch = ''
@@ -30,7 +31,7 @@ stdenv.mkDerivation rec {
     pkg-config
   ];
 
-  buildInputs = [
+  buildInputs = lib.optionals stdenv.isLinux [
     libffi
     wayland-protocols
     wayland
@@ -45,11 +46,16 @@ stdenv.mkDerivation rec {
     "-DINSTALL_PREFIX=${placeholder "out"}"
   ];
 
+  postFixup = lib.optionalString stdenv.isLinux ''
+    patchelf $out/bin/cb --add-rpath $out/lib
+  '';
+
   meta = with lib; {
     description = "Cut, copy, and paste anything, anywhere, all from the terminal";
     homepage = "https://github.com/Slackadays/clipboard";
     license = licenses.gpl3Only;
     maintainers = with maintainers; [ dit7ya ];
-    mainProgram = "clipboard";
+    platforms = platforms.all;
+    mainProgram = "cb";
   };
 }

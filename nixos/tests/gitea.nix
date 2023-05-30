@@ -26,11 +26,11 @@ let
   supportedDbTypes = [ "mysql" "postgres" "sqlite3" ];
   makeGiteaTest = type: nameValuePair type (makeTest {
     name = "${giteaPackage.pname}-${type}";
-    meta.maintainers = with maintainers; [ aanderse indeednotjames kolaente ma27 ];
+    meta.maintainers = with maintainers; [ aanderse emilylange kolaente ma27 ];
 
     nodes = {
       server = { config, pkgs, ... }: {
-        virtualisation.memorySize = 2048;
+        virtualisation.memorySize = 2047;
         services.gitea = {
           enable = true;
           database = { inherit type; };

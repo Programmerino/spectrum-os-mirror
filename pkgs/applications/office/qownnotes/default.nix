@@ -8,8 +8,7 @@
 , qtsvg
 , qtwayland
 , qtwebsockets
-, qtx11extras
-, qtxmlpatterns
+, qt5compat
 , makeWrapper
 , wrapQtAppsHook
 }:
@@ -17,14 +16,14 @@
 let
   pname = "qownnotes";
   appname = "QOwnNotes";
-  version = "23.4.7";
+  version = "23.5.3";
 in
 stdenv.mkDerivation {
   inherit pname appname version;
 
   src = fetchurl {
     url = "https://download.tuxfamily.org/${pname}/src/${pname}-${version}.tar.xz";
-    sha256 = "sha256-E9ap7TcICVwalPfScPEcn4lgNkDI2sPtdIgwRQkcOd0=";
+    hash = "sha256-keNR+RMFVlHMeyT1Ngtuu2jWMDwFyLbZAVUk7c0Ed38=";
   };
 
   nativeBuildInputs = [
@@ -38,8 +37,7 @@ stdenv.mkDerivation {
     qtdeclarative
     qtsvg
     qtwebsockets
-    qtx11extras
-    qtxmlpatterns
+    qt5compat
   ] ++ lib.optionals stdenv.isLinux [ qtwayland ];
 
   postInstall =

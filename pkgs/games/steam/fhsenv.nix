@@ -29,6 +29,9 @@ let
     procps
     usbutils
 
+    # It tries to execute xdg-user-dir and spams the log with command not founds
+    xdg-user-dirs
+
     # electron based launchers need newer versions of these libraries than what runtime provides
     mesa
     sqlite
@@ -59,7 +62,7 @@ in buildFHSEnv rec {
   name = "steam";
 
   targetPkgs = pkgs: with pkgs; [
-    steamPackages.steam
+    steam
     # License agreement
     gnome.zenity
   ] ++ commonTargetPkgs pkgs;
@@ -113,6 +116,7 @@ in buildFHSEnv rec {
     SDL2
     libusb1
     dbus-glib
+    gsettings-desktop-schemas
     ffmpeg
     libudev0-shim
 
@@ -130,6 +134,9 @@ in buildFHSEnv rec {
     libidn
     tbb
     zlib
+
+    # SteamVR
+    udev
 
     # Other things from runtime
     glib
@@ -177,7 +184,6 @@ in buildFHSEnv rec {
     xorg.xkeyboardconfig
     xorg.libpciaccess
     xorg.libXScrnSaver # Dead Cells
-    udev # Shadow of the Tomb Raider
     icu # dotnet runtime, e.g. Stardew Valley
 
     # screeps dependencies
@@ -200,12 +206,13 @@ in buildFHSEnv rec {
     libidn2
     libpsl
     nghttp2.lib
-    openssl_1_1
     rtmpdump
-  ] ++ steamPackages.steam-runtime-wrapped.overridePkgs
+  ]
+  # This needs to come from pkgs as the passed-in steam-runtime-wrapped may not be the same architecture
+  ++ pkgs.steamPackages.steam-runtime-wrapped.overridePkgs
   ++ extraLibraries pkgs;
 
-  extraInstallCommands = ''
+  extraInstallCommands = lib.optionalString (steam != null) ''
     mkdir -p $out/share/applications
     ln -s ${steam}/share/icons $out/share
     ln -s ${steam}/share/pixmaps $out/share
@@ -257,9 +264,15 @@ in buildFHSEnv rec {
     exec steam ${extraArgs} "$@"
   '';
 
-  meta = steam.meta // lib.optionalAttrs (!withGameSpecificLibraries) {
-    description = steam.meta.description + " (without game specific libraries)";
-  };
+  meta =
+    if steam != null
+    then
+      steam.meta // lib.optionalAttrs (!withGameSpecificLibraries) {
+        description = steam.meta.description + " (without game specific libraries)";
+      }
+    else {
+      description = "Steam dependencies (dummy package, do not use)";
+    };
 
   # allows for some gui applications to share IPC
   # this fixes certain issues where they don't render correctly
@@ -293,7 +306,7 @@ in buildFHSEnv rec {
       exec -- "$run" "$@"
     '';
 
-    meta = steam.meta // {
+    meta = (steam.meta or {}) // {
       description = "Run commands in the same FHS environment that is used for Steam";
       name = "steam-run";
     };

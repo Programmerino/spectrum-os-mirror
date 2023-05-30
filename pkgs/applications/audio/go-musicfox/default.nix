@@ -4,22 +4,23 @@
 , pkg-config
 , alsa-lib
 , flac
+, nix-update-script
 }:
 
 buildGoModule rec {
   pname = "go-musicfox";
-  version = "4.0.5";
+  version = "4.1.1";
 
   src = fetchFromGitHub {
-    owner = "anhoder";
+    owner = "go-musicfox";
     repo = pname;
     rev = "v${version}";
-    hash = "sha256-NAAl/XmJqRnJyOYNJqmMlCIiGsCsSH7gGTMbD46gpss=";
+    hash = "sha256-A1+JDMT4mHUi10GE4/qV5IMuwNsm4EdBt9VC2ZvJzuU=";
   };
 
   deleteVendor = true;
 
-  vendorHash = null;
+  vendorHash = "sha256-xzLUWqzDVT+Htw/BHygOJM16uQvWXopyxxHBZQKcOQ8=";
 
   subPackages = [ "cmd/musicfox.go" ];
 
@@ -37,6 +38,8 @@ buildGoModule rec {
     alsa-lib
     flac
   ];
+
+  passthru.updateScript = nix-update-script { };
 
   meta = with lib; {
     description = "Terminal netease cloud music client written in Go";
