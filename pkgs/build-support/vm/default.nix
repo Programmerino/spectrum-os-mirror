@@ -1016,7 +1016,7 @@ rec {
         url = "https://snapshot.debian.org/archive/debian/20221126T084953Z/dists/buster/main/binary-i386/Packages.xz";
         hash = "sha256-n9JquhtZgxw3qr9BX0MQoY3ZTIHN0dit+iru3DC31UY=";
       };
-      urlPrefix = "mirror://debian";
+      urlPrefix = "https://snapshot.debian.org/archive/debian/20221126T084953Z";
       packages = commonDebianPackages;
     };
 
@@ -1027,7 +1027,7 @@ rec {
         url = "https://snapshot.debian.org/archive/debian/20221126T084953Z/dists/buster/main/binary-amd64/Packages.xz";
         hash = "sha256-YukIIB3u87jgp9oudwklsxyKVKjSL618wFgDSXiFmjU=";
       };
-      urlPrefix = "mirror://debian";
+      urlPrefix = "https://snapshot.debian.org/archive/debian/20221126T084953Z";
       packages = commonDebianPackages;
     };
 
@@ -1038,7 +1038,7 @@ rec {
         url = "https://snapshot.debian.org/archive/debian/20230131T034648Z/dists/bullseye/main/binary-i386/Packages.xz";
         hash = "sha256-z9eG7RlvelEnZAaeCfIO+XxTZVL3d+zTA7ShU43l/pw=";
       };
-      urlPrefix = "mirror://debian";
+      urlPrefix = "https://snapshot.debian.org/archive/debian/20230131T034648Z";
       packages = commonDebianPackages;
     };
 
@@ -1049,7 +1049,7 @@ rec {
         url = "https://snapshot.debian.org/archive/debian/20230131T034648Z/dists/bullseye/main/binary-amd64/Packages.xz";
         hash = "sha256-mz0eCWdn6uWt40OxsSPheHzEnMeLE52yR/vpb48/VF0=";
       };
-      urlPrefix = "mirror://debian";
+      urlPrefix = "https://snapshot.debian.org/archive/debian/20230131T034648Z";
       packages = commonDebianPackages;
     };
   };
