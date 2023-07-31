@@ -1,4 +1,4 @@
-From d3ed51d8890a62e99ce90702934eb0397a9efd1b Mon Sep 17 00:00:00 2001
+From 8bf78e304a0cf22139b5f99779e68e4f4527f08e Mon Sep 17 00:00:00 2001
 From: Alyssa Ross <alyssa.ross@unikie.com>
 Date: Wed, 28 Sep 2022 12:18:19 +0000
 Subject: [PATCH 1/2] build: use local vhost
@@ -11,7 +11,7 @@ Signed-off-by: Alyssa Ross <hi@alyssa.is>
  2 files changed, 1 insertion(+), 2 deletions(-)
 
 diff --git a/Cargo.lock b/Cargo.lock
-index 23401c96..2d4f56e0 100644
+index c93ebc07..f90a782c 100644
 --- a/Cargo.lock
 +++ b/Cargo.lock
 @@ -1413,8 +1413,6 @@ dependencies = [
@@ -24,7 +24,7 @@ index 23401c96..2d4f56e0 100644
   "bitflags",
   "libc",
 diff --git a/Cargo.toml b/Cargo.toml
-index 4dd1297c..21cc5e06 100644
+index 69ce35d9..3e42ed13 100644
 --- a/Cargo.toml
 +++ b/Cargo.toml
 @@ -54,6 +54,7 @@ vm-memory = "0.10.0"
@@ -36,5 +36,5 @@ index 4dd1297c..21cc5e06 100644
  [dev-dependencies]
  dirs = "5.0.0"
 -- 
-2.37.1
+2.40.1
 
