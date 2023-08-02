@@ -3,31 +3,30 @@
 , rustPlatform
 , fetchFromGitHub
 , pkg-config
-, openssl
-# waiting on gex to update to libgit2-sys >= 0.15
-, libgit2_1_5
+, libgit2
 }:
 
 rustPlatform.buildRustPackage rec {
   pname = "gex";
-  version = "0.3.8";
+  version = "0.5.0";
 
   src = fetchFromGitHub {
     owner = "Piturnah";
     repo = pname;
     rev = "v${version}";
-    hash = "sha256-pjyS0H25wdcexpzZ2vVzGTwDPzyvA9PDgzz81yLGTOY=";
+    hash = "sha256-//sQ0s8bBQzuu5aO3RjPRjFuVYiGW6BwSPoCWKAx9DQ=";
   };
 
   nativeBuildInputs = [ pkg-config ];
-  buildInputs = [ openssl libgit2_1_5 ];
+  buildInputs = [ libgit2 ];
 
-  cargoHash = "sha256-+FwXm3QN9bt//dWqzkBzsGigyl1SSY4/P29QtV75V6M=";
+  cargoHash = "sha256-rkhkFnRDtMTWFM+E5C4jR7TWtHdy3WUtIzvGDDLHqtE=";
 
   meta = with lib; {
     description = "Git Explorer: cross-platform git workflow improvement tool inspired by Magit";
     homepage = "https://github.com/Piturnah/gex";
+    changelog = "https://github.com/Piturnah/gex/releases/tag/${src.rev}";
     license = with licenses; [ asl20 /* or */ mit ];
-    maintainers = with maintainers; [ azd325 Br1ght0ne ];
+    maintainers = with maintainers; [ azd325 evanrichter piturnah ];
   };
 }
