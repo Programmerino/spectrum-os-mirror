@@ -343,7 +343,11 @@ let
 
     domain-local-await = callPackage ../development/ocaml-modules/domain-local-await { };
 
+    domain-local-timeout = callPackage ../development/ocaml-modules/domain-local-timeout { };
+
     domain-name = callPackage ../development/ocaml-modules/domain-name { };
+
+    domain_shims = callPackage ../development/ocaml-modules/domain_shims { };
 
     domainslib = callPackage ../development/ocaml-modules/domainslib { };
 
@@ -797,6 +801,8 @@ let
 
     kafka_lwt = callPackage ../development/ocaml-modules/kafka/lwt.nix { };
 
+    kcas = callPackage ../development/ocaml-modules/kcas { };
+
     ke = callPackage ../development/ocaml-modules/ke { };
 
     kicadsch = callPackage ../development/ocaml-modules/kicadsch { };
@@ -869,8 +875,6 @@ let
     };
 
     lo = callPackage ../development/ocaml-modules/lo { };
-
-    lockfree = callPackage ../development/ocaml-modules/lockfree { };
 
     logs = callPackage ../development/ocaml-modules/logs { };
 
@@ -1000,7 +1004,7 @@ let
 
     mirage-clock = callPackage ../development/ocaml-modules/mirage-clock { };
 
-    mirage-clock-freestanding = callPackage ../development/ocaml-modules/mirage-clock/freestanding.nix { };
+    mirage-clock-solo5 = callPackage ../development/ocaml-modules/mirage-clock/solo5.nix { };
 
     mirage-clock-unix = callPackage ../development/ocaml-modules/mirage-clock/unix.nix { };
 
@@ -1051,8 +1055,6 @@ let
     mirage-random-test = callPackage ../development/ocaml-modules/mirage-random-test { };
 
     mirage-runtime = callPackage ../development/ocaml-modules/mirage/runtime.nix { };
-
-    mirage-stack = callPackage ../development/ocaml-modules/mirage-stack { };
 
     mirage-time = callPackage ../development/ocaml-modules/mirage-time { };
 
@@ -1149,6 +1151,8 @@ let
 
     ocaml-protoc = callPackage ../development/ocaml-modules/ocaml-protoc { };
 
+    ocaml-protoc-plugin = callPackage ../development/ocaml-modules/ocaml-protoc-plugin { };
+
     ocaml-r = callPackage ../development/ocaml-modules/ocaml-r { };
 
     ocaml-recovery-parser = callPackage ../development/tools/ocaml/ocaml-recovery-parser { };
@@ -1181,6 +1185,7 @@ let
     ocamlformat_0_23_0 = ocamlformat.override { version = "0.23.0"; };
     ocamlformat_0_24_1 = ocamlformat.override { version = "0.24.1"; };
     ocamlformat_0_25_1 = ocamlformat.override { version = "0.25.1"; };
+    ocamlformat_0_26_0 = ocamlformat.override { version = "0.26.0"; };
 
     ocamlformat = callPackage ../development/ocaml-modules/ocamlformat/ocamlformat.nix {};
 
@@ -1432,7 +1437,10 @@ let
 
     psq = callPackage ../development/ocaml-modules/psq { };
 
-    ptime = callPackage ../development/ocaml-modules/ptime { };
+    ptime =
+      if lib.versionAtLeast ocaml.version "4.08"
+      then callPackage ../development/ocaml-modules/ptime { }
+      else null;
 
     ptmap = callPackage ../development/ocaml-modules/ptmap { };
 
@@ -1454,7 +1462,13 @@ let
 
     qcheck-core = callPackage ../development/ocaml-modules/qcheck/core.nix { };
 
+    qcheck-lin = callPackage ../development/ocaml-modules/qcheck/lin.nix { };
+
+    qcheck-multicoretests-util = callPackage ../development/ocaml-modules/qcheck/multicoretests-util.nix { };
+
     qcheck-ounit = callPackage ../development/ocaml-modules/qcheck/ounit.nix { };
+
+    qcheck-stm = callPackage ../development/ocaml-modules/qcheck/stm.nix { };
 
     qtest = callPackage ../development/ocaml-modules/qtest { };
 
@@ -1521,6 +1535,10 @@ let
 
     samplerate = callPackage ../development/ocaml-modules/samplerate { };
 
+    saturn = callPackage ../development/ocaml-modules/saturn { };
+
+    saturn_lockfree = callPackage ../development/ocaml-modules/saturn/lockfree.nix { };
+
     sawja = callPackage ../development/ocaml-modules/sawja { };
 
     secp256k1 = callPackage ../development/ocaml-modules/secp256k1 {
@@ -1530,6 +1548,8 @@ let
     secp256k1-internal = callPackage ../development/ocaml-modules/secp256k1-internal { };
 
     sedlex = callPackage ../development/ocaml-modules/sedlex { };
+
+    sel = callPackage ../development/ocaml-modules/sel {};
 
     semaphore-compat = callPackage ../development/ocaml-modules/semaphore-compat { };
 
@@ -1638,6 +1658,10 @@ let
     torch = callPackage ../development/ocaml-modules/torch {
       inherit (pkgs.python3Packages) torch;
     };
+
+    trace = callPackage ../development/ocaml-modules/trace { };
+
+    trace-tef = callPackage ../development/ocaml-modules/trace/tef.nix { };
 
     trie = callPackage ../development/ocaml-modules/trie { };
 
@@ -1791,7 +1815,7 @@ let
 
     ### End ###
 
-  })).overrideScope' liftJaneStreet;
+  })).overrideScope liftJaneStreet;
 
 in let inherit (pkgs) callPackage; in rec
 {

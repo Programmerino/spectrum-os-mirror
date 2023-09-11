@@ -125,6 +125,7 @@
 
   # must be lua51Packages
 , luaPackages
+, luajitPackages
 }:
 
 self: super: {
@@ -147,6 +148,19 @@ self: super: {
       license = lib.licenses.mit;
       maintainers = with lib.maintainers; [ lightquantum ];
     };
+  };
+
+  # The GitHub repository returns 404, which breaks the update script
+  bitbake-vim = buildVimPluginFrom2Nix {
+    pname = "bitbake.vim";
+    version = "2021-02-06";
+    src = fetchFromGitHub {
+      owner = "sblumentritt";
+      repo = "bitbake.vim";
+      rev = "faddca1e8768b10c80ee85221fb51a560df5ba45";
+      sha256 = "1hfly2vxhhvjdiwgfz58hr3523kf9z71i78vk168n3kdqp5vkwrp";
+    };
+    meta.homepage = "https://github.com/sblumentritt/bitbake.vim/";
   };
 
   chadtree = super.chadtree.overrideAttrs {
@@ -503,7 +517,7 @@ self: super: {
     });
 
   fuzzy-nvim = super.fuzzy-nvim.overrideAttrs {
-    dependencies = with self; [ telescope-fzy-native-nvim ];
+    dependencies = with self; [ telescope-fzf-native-nvim ];
   };
 
   fzf-checkout-vim = super.fzf-checkout-vim.overrideAttrs {
@@ -585,6 +599,24 @@ self: super: {
 
     src = "${hurl.src}/contrib/vim";
 
+  };
+
+  image-nvim = super.image-nvim.overrideAttrs {
+    dependencies = with self; [
+      nvim-treesitter
+      nvim-treesitter-parsers.markdown_inline
+      nvim-treesitter-parsers.norg
+    ];
+
+    # Add magick to package.path
+    patches = [ ./patches/image-nvim/magick.patch ];
+
+    postPatch = ''
+      substituteInPlace lua/image/magick.lua \
+        --replace @nix_magick@ ${luajitPackages.magick}
+    '';
+
+    nvimRequireCheck = "image";
   };
 
   jedi-vim = super.jedi-vim.overrideAttrs {
@@ -870,6 +902,21 @@ self: super: {
     dependencies = with self; [ (nvim-treesitter.withPlugins (p: [ p.org ])) ];
   };
 
+  overseer-nvim = super.overseer-nvim.overrideAttrs {
+    doCheck = true;
+    checkPhase = ''
+      runHook preCheck
+
+      plugins=.testenv/data/nvim/site/pack/plugins/start
+      mkdir -p "$plugins"
+      ln -s ${self.plenary-nvim} "$plugins/plenary.nvim"
+      bash run_tests.sh
+      rm -r .testenv
+
+      runHook postCheck
+    '';
+  };
+
   inherit parinfer-rust;
 
   phpactor = buildVimPluginFrom2Nix {
@@ -919,7 +966,7 @@ self: super: {
         pname = "sg-nvim-rust";
         inherit (old) version src;
 
-        cargoHash = "sha256-IRp4avOvM2tz2oC1Cwr4W/d4i0pzawcZLP+c1+jnm+I=";
+        cargoHash = "sha256-qwllMt4va9j8Sfh2+xYcfRtQgypNKZLDT3gRD7dUQ+w=";
 
         nativeBuildInputs = [ pkg-config ];
 
@@ -953,18 +1000,23 @@ self: super: {
 
   sniprun =
     let
-      version = "1.3.4";
+      version = "1.3.6";
       src = fetchFromGitHub {
         owner = "michaelb";
         repo = "sniprun";
         rev = "v${version}";
-        hash = "sha256-H1PmjiNyUp+fTDqnfppFii+aDh8gPD/ALHFNWVXch3w=";
+        hash = "sha256-1xvB/YhpHlOhxbkIGlgQyTlO5ljWPHfOm+tuhKRTXAw=";
       };
       sniprun-bin = rustPlatform.buildRustPackage {
         pname = "sniprun-bin";
         inherit version src;
 
-        cargoHash = "sha256-WXhH0zqGj/D83AoEfs0kPqW7UXIAkURTJ+/BKbuUvss=";
+        # Cargo.lock is outdated
+        preBuild = ''
+          cargo update --offline
+        '';
+
+        cargoHash = "sha256-pML4ZJYivC/tu/7yvbB/VHfXTT+UpLZuS1Y3iNXt2Ks=";
 
         nativeBuildInputs = [ makeWrapper ];
 
@@ -1042,9 +1094,8 @@ self: super: {
       svedbackend = stdenv.mkDerivation {
         name = "svedbackend-${super.sved.name}";
         inherit (super.sved) src;
-        nativeBuildInputs = [ wrapGAppsHook ];
+        nativeBuildInputs = [ wrapGAppsHook gobject-introspection ];
         buildInputs = [
-          gobject-introspection
           glib
           (python3.withPackages (ps: with ps; [ pygobject3 pynvim dbus-python ]))
         ];
@@ -1408,6 +1459,10 @@ self: super: {
     preInstall = "cd vim";
   };
 
+  vim-pluto = super.vim-pluto.overrideAttrs {
+    dependencies = with self; [ denops-vim ];
+  };
+
   vim-snipmate = super.vim-snipmate.overrideAttrs {
     dependencies = with self; [ vim-addon-mw-utils tlib_vim ];
   };
@@ -1580,7 +1635,6 @@ self: super: {
       "coc-haxe"
       "coc-highlight"
       "coc-html"
-      "coc-imselect"
       "coc-java"
       "coc-jest"
       "coc-json"

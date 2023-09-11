@@ -254,6 +254,8 @@ lib.makeScope pkgs.newScope (self: with self; {
 
     oci8 = callPackage ../development/php-packages/oci8 { };
 
+    opentelemetry = callPackage ../development/php-packages/opentelemetry { };
+
     openswoole = callPackage ../development/php-packages/openswoole { };
 
     pdlib = callPackage ../development/php-packages/pdlib { };
@@ -303,6 +305,8 @@ lib.makeScope pkgs.newScope (self: with self; {
     swoole = callPackage ../development/php-packages/swoole { };
 
     uv = callPackage ../development/php-packages/uv { };
+
+    vld = callPackage ../development/php-packages/vld { };
 
     xdebug = callPackage ../development/php-packages/xdebug { };
 

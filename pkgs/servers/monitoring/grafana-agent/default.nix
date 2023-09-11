@@ -1,26 +1,35 @@
 { lib
 , buildGoModule
 , fetchFromGitHub
+, fetchYarnDeps
+, fixup_yarn_lock
 , grafana-agent
 , nixosTests
+, nodejs
 , stdenv
 , systemd
 , testers
+, yarn
 }:
 
 buildGoModule rec {
   pname = "grafana-agent";
-  version = "0.34.3";
+  version = "0.35.4";
 
   src = fetchFromGitHub {
     owner = "grafana";
     repo = "agent";
     rev = "v${version}";
-    hash = "sha256-llHMTuNWGipL732L+uCupILvomhwZMFT8tJaFkBs+AQ=";
+    hash = "sha256-3pUKqmqnRm3/e/fhAV5cq16wcK/f7KWb3aoFbPXCC3o=";
   };
 
-  vendorHash = "sha256-x9c6xRk1Ska+kqoFhAJ9ei35Lg8wsgDpZpfxJ3UExfg=";
+  vendorHash = "sha256-vzrp20Mg6AA0h3+5+qbKRa7nhx/hgiIHG6RNXLATpHE=";
   proxyVendor = true; # darwin/linux hash mismatch
+
+  frontendYarnOfflineCache = fetchYarnDeps {
+    yarnLock = src + "/web/ui/yarn.lock";
+    hash = "sha256-xJEPubIDjlZQL70UGha1MHbeek6KFPaxZGb5IRgMlTA=";
+  };
 
   ldflags = let
     prefix = "github.com/grafana/agent/pkg/build";
@@ -34,7 +43,10 @@ buildGoModule rec {
     "-X ${prefix}.BuildDate=1980-01-01T00:00:00Z"
   ];
 
+  nativeBuildInputs = [ fixup_yarn_lock nodejs yarn ];
+
   tags = [
+    "builtinassets"
     "nonetwork"
     "nodocker"
     "promtail_journal_enabled"
@@ -43,7 +55,20 @@ buildGoModule rec {
   subPackages = [
     "cmd/grafana-agent"
     "cmd/grafana-agentctl"
+    "web/ui"
   ];
+
+  preBuild = ''
+    export HOME="$TMPDIR"
+
+    pushd web/ui
+    fixup_yarn_lock yarn.lock
+    yarn config --offline set yarn-offline-mirror $frontendYarnOfflineCache
+    yarn install --offline --frozen-lockfile --ignore-platform --ignore-scripts --no-progress --non-interactive
+    patchShebangs node_modules
+    yarn --offline run build
+    popd
+  '';
 
   # uses go-systemd, which uses libsystemd headers
   # https://github.com/coreos/go-systemd/issues/351
@@ -73,5 +98,6 @@ buildGoModule rec {
     homepage = "https://grafana.com/products/cloud";
     changelog = "https://github.com/grafana/agent/blob/${src.rev}/CHANGELOG.md";
     maintainers = with lib.maintainers; [ flokli emilylange ];
+    mainProgram = "grafana-agent";
   };
 }

@@ -242,7 +242,11 @@ rec {
 
 
   */
-  writeScriptBin = name: text: writeTextFile {inherit name text; executable = true; destination = "/bin/${name}";};
+  writeScriptBin = name: text: writeTextFile {
+    inherit name text;
+    executable = true;
+    destination = "/bin/${name}";
+  };
 
   /*
     Similar to writeScript. Writes a Shell script and checks its syntax.
@@ -300,6 +304,7 @@ rec {
       checkPhase = ''
         ${stdenv.shellDryRun} "$target"
       '';
+      meta.mainProgram = name;
     };
 
   /*
@@ -353,12 +358,20 @@ rec {
       '';
 
       checkPhase =
+        # GHC (=> shellcheck) isn't supported on some platforms (such as risc-v)
+        # but we still want to use writeShellApplication on those platforms
+        let
+          shellcheckSupported = lib.meta.availableOn stdenv.buildPlatform shellcheck.compiler;
+          shellcheckCommand = lib.optionalString shellcheckSupported ''
+            # use shellcheck which does not include docs
+            # pandoc takes long to build and documentation isn't needed for just running the cli
+            ${lib.getExe (haskell.lib.compose.justStaticExecutables shellcheck.unwrapped)} "$target"
+          '';
+        in
         if checkPhase == null then ''
           runHook preCheck
           ${stdenv.shellDryRun} "$target"
-          # use shellcheck which does not include docs
-          # pandoc takes long to build and documentation isn't needed for in nixpkgs usage
-          ${lib.getExe (haskell.lib.compose.justStaticExecutables shellcheck.unwrapped)} "$target"
+          ${shellcheckCommand}
           runHook postCheck
         ''
         else checkPhase;
@@ -374,6 +387,9 @@ rec {
       # Pointless to do this on a remote machine.
       preferLocalBuild = true;
       allowSubstitutes = false;
+      meta = {
+        mainProgram = name;
+      };
     }
     ''
       n=$out/bin/$name
@@ -817,9 +833,10 @@ rec {
         or
           nix-prefetch-url --type ${hashAlgo} file:///path/to/${name_}
       '';
-      hashAlgo = if hash != null then ""
+      hashAlgo = if hash != null then (builtins.head (lib.strings.splitString "-" hash))
             else if sha256 != null then "sha256"
             else "sha1";
+      hashAlgo_ = if hash != null then "" else hashAlgo;
       hash_ = if hash != null then hash
          else if sha256 != null then sha256
          else sha1;
@@ -828,7 +845,7 @@ rec {
     stdenvNoCC.mkDerivation {
       name = name_;
       outputHashMode = hashMode;
-      outputHashAlgo = hashAlgo;
+      outputHashAlgo = hashAlgo_;
       outputHash = hash_;
       preferLocalBuild = true;
       allowSubstitutes = false;
@@ -888,13 +905,17 @@ rec {
              ) + "-patched"
     , patches   ? []
     , postPatch ? ""
-    }: stdenvNoCC.mkDerivation {
+    , ...
+    }@args: stdenvNoCC.mkDerivation {
       inherit name src patches postPatch;
       preferLocalBuild = true;
       allowSubstitutes = false;
       phases = "unpackPhase patchPhase installPhase";
       installPhase = "cp -R ./ $out";
-    };
+    }
+    # Carry `meta` information from the underlying `src` if present.
+    // (optionalAttrs (src?meta) { inherit (src) meta; })
+    // (removeAttrs args [ "src" "name" "patches" "postPatch" ]);
 
   /* An immutable file in the store with a length of 0 bytes. */
   emptyFile = runCommand "empty-file" {

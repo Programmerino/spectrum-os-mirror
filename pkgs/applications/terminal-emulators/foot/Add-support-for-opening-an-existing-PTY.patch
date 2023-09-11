@@ -1,4 +1,4 @@
-From e5dd973baaa8ab602f72d80439be856cc6834580 Mon Sep 17 00:00:00 2001
+From 85cb6c3c705424ff3352d4771efa4c4d0dd09590 Mon Sep 17 00:00:00 2001
 From: Alyssa Ross <hi@alyssa.is>
 Date: Fri, 10 Dec 2021 17:40:59 +0000
 Subject: [PATCH] Add support for opening an existing PTY
@@ -11,7 +11,7 @@ Subject: [PATCH] Add support for opening an existing PTY
  4 files changed, 56 insertions(+), 32 deletions(-)
 
 diff --git a/main.c b/main.c
-index 4617a3c7..e13b7595 100644
+index dffd2b2b..aa060747 100644
 --- a/main.c
 +++ b/main.c
 @@ -3,6 +3,7 @@
@@ -22,7 +22,7 @@ index 4617a3c7..e13b7595 100644
  #include <locale.h>
  #include <getopt.h>
  #include <signal.h>
-@@ -171,6 +172,10 @@ sanitize_signals(void)
+@@ -174,6 +175,10 @@ sanitize_signals(void)
          sigaction(i, &dfl, NULL);
  }
  
@@ -33,7 +33,7 @@ index 4617a3c7..e13b7595 100644
  int
  main(int argc, char *const *argv)
  {
-@@ -208,6 +213,7 @@ main(int argc, char *const *argv)
+@@ -211,6 +216,7 @@ main(int argc, char *const *argv)
          {"maximized",              no_argument,       NULL, 'm'},
          {"fullscreen",             no_argument,       NULL, 'F'},
          {"presentation-timings",   no_argument,       NULL, 'P'}, /* Undocumented */
@@ -42,14 +42,14 @@ index 4617a3c7..e13b7595 100644
          {"log-level",              required_argument, NULL, 'd'},
          {"log-colorize",           optional_argument, NULL, 'l'},
 @@ -223,6 +229,7 @@ main(int argc, char *const *argv)
-     const char *conf_title = NULL;
-     const char *conf_app_id = NULL;
+     bool check_config = false;
+     const char *conf_path = NULL;
      const char *custom_cwd = NULL;
 +    const char *pty_path = NULL;
-     bool login_shell = false;
-     tll(char *) conf_fonts = tll_init();
-     enum conf_size_type conf_size_type = CONF_SIZE_PX;
-@@ -341,6 +348,10 @@ main(int argc, char *const *argv)
+     bool as_server = false;
+     const char *conf_server_socket_path = NULL;
+     bool presentation_timings = false;
+@@ -318,6 +325,10 @@ main(int argc, char *const *argv)
                  conf_server_socket_path = optarg;
              break;
  
@@ -60,7 +60,7 @@ index 4617a3c7..e13b7595 100644
          case 'P':
              presentation_timings = true;
              break;
-@@ -615,7 +626,7 @@ main(int argc, char *const *argv)
+@@ -576,7 +587,7 @@ main(int argc, char *const *argv)
          goto out;
  
      if (!as_server && (term = term_init(
@@ -83,18 +83,18 @@ index ca55b8f3..b1268574 100644
      if (instance->terminal == NULL) {
          LOG_ERR("failed to instantiate new terminal");
 diff --git a/terminal.c b/terminal.c
-index 0763fb52..b300678c 100644
+index d4132c24..ad10bb7d 100644
 --- a/terminal.c
 +++ b/terminal.c
-@@ -328,6 +328,7 @@ fdm_ptmx(struct fdm *fdm, int fd, int events, void *data)
-     if (hup) {
+@@ -367,6 +367,7 @@ fdm_ptmx(struct fdm *fdm, int fd, int events, void *data)
+         del_utmp_record(term->conf, term->reaper, term->ptmx);
          fdm_del(fdm, fd);
          term->ptmx = -1;
 +        term_shutdown(term);
      }
  
      return true;
-@@ -1036,11 +1037,14 @@ load_fonts_from_conf(struct terminal *term)
+@@ -1056,11 +1057,14 @@ load_fonts_from_conf(struct terminal *term)
  static void fdm_client_terminated(
      struct reaper *reaper, pid_t pid, int status, void *data);
  
@@ -111,7 +111,7 @@ index 0763fb52..b300678c 100644
  {
      int ptmx = -1;
      int flash_fd = -1;
-@@ -1055,7 +1059,8 @@ term_init(const struct config *conf, struct fdm *fdm, struct reaper *reaper,
+@@ -1075,7 +1079,8 @@ term_init(const struct config *conf, struct fdm *fdm, struct reaper *reaper,
          return NULL;
      }
  
@@ -121,7 +121,7 @@ index 0763fb52..b300678c 100644
          LOG_ERRNO("failed to open PTY");
          goto close_fds;
      }
-@@ -1117,6 +1122,7 @@ term_init(const struct config *conf, struct fdm *fdm, struct reaper *reaper,
+@@ -1142,6 +1147,7 @@ term_init(const struct config *conf, struct fdm *fdm, struct reaper *reaper,
          .fdm = fdm,
          .reaper = reaper,
          .conf = conf,
@@ -129,9 +129,9 @@ index 0763fb52..b300678c 100644
          .ptmx = ptmx,
          .ptmx_buffers = tll_init(),
          .ptmx_paste_buffers = tll_init(),
-@@ -1246,16 +1252,18 @@ term_init(const struct config *conf, struct fdm *fdm, struct reaper *reaper,
-     }
-     term->font_line_height = conf->line_height;
+@@ -1272,16 +1278,18 @@ term_init(const struct config *conf, struct fdm *fdm, struct reaper *reaper,
+ 
+     add_utmp_record(conf, reaper, ptmx);
  
 -    /* Start the slave/client */
 -    if ((term->slave = slave_spawn(
@@ -156,8 +156,8 @@ index 0763fb52..b300678c 100644
 +    }
  
      /* Guess scale; we're not mapped yet, so we don't know on which
-      * output we'll be. Pick highest scale we find for now */
-@@ -1517,26 +1525,30 @@ term_shutdown(struct terminal *term)
+      * output we'll be. Use scaling factor from first monitor */
+@@ -1541,26 +1549,30 @@ term_shutdown(struct terminal *term)
          close(term->ptmx);
  
      if (!term->shutdown.client_has_terminated) {
@@ -205,10 +205,10 @@ index 0763fb52..b300678c 100644
  
      term->selection.auto_scroll.fd = -1;
 diff --git a/terminal.h b/terminal.h
-index 0dde6330..61b1b7fe 100644
+index 25019ecd..569fe8f4 100644
 --- a/terminal.h
 +++ b/terminal.h
-@@ -680,8 +680,9 @@ struct config;
+@@ -722,8 +722,9 @@ struct config;
  struct terminal *term_init(
      const struct config *conf, struct fdm *fdm, struct reaper *reaper,
      struct wayland *wayl, const char *foot_exe, const char *cwd,
@@ -221,5 +221,5 @@ index 0dde6330..61b1b7fe 100644
  bool term_shutdown(struct terminal *term);
  int term_destroy(struct terminal *term);
 -- 
-2.37.1
+2.41.0
 

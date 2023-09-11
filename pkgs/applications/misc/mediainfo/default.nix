@@ -12,7 +12,7 @@ stdenv.mkDerivation rec {
   nativeBuildInputs = [ autoreconfHook pkg-config ];
   buildInputs = [ libzen libmediainfo zlib ];
 
-  sourceRoot = "./MediaInfo/Project/GNU/CLI/";
+  sourceRoot = "MediaInfo/Project/GNU/CLI";
 
   configureFlags = [ "--with-libmediainfo=${libmediainfo}" ];
 
@@ -28,5 +28,6 @@ stdenv.mkDerivation rec {
     license = licenses.bsd2;
     platforms = platforms.unix;
     maintainers = [ maintainers.devhell ];
+    mainProgram = "mediainfo";
   };
 }

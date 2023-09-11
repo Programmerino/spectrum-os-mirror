@@ -1,4 +1,4 @@
-From 08fe33ba40a4dab55d05b7af7cd417847cbfc9ce Mon Sep 17 00:00:00 2001
+From 190d17525b2003274fd9947114824916f32b4c6f Mon Sep 17 00:00:00 2001
 From: Alyssa Ross <alyssa.ross@unikie.com>
 Date: Wed, 7 Sep 2022 14:16:29 +0000
 Subject: [PATCH 2/2] virtio-devices: add a GPU device
@@ -32,33 +32,33 @@ Signed-off-by: Alyssa Ross <hi@alyssa.is>
  virtio-devices/src/vhost_user/gpu.rs       | 406 +++++++++++++++++++++
  virtio-devices/src/vhost_user/mod.rs       |   2 +
  vmm/Cargo.toml                             |   1 +
- vmm/src/api/mod.rs                         |   7 +
- vmm/src/config.rs                          | 104 ++++++
+ vmm/src/api/mod.rs                         |  10 +-
+ vmm/src/config.rs                          | 111 ++++++
  vmm/src/device_manager.rs                  | 140 ++++++-
- vmm/src/lib.rs                             |  83 +++++
- vmm/src/vm.rs                              |  33 +-
- vmm/src/vm_config.rs                       |  27 ++
- 15 files changed, 837 insertions(+), 11 deletions(-)
+ vmm/src/lib.rs                             |  88 ++++-
+ vmm/src/vm.rs                              |  28 +-
+ vmm/src/vm_config.rs                       |  25 ++
+ 15 files changed, 839 insertions(+), 17 deletions(-)
  create mode 100644 virtio-devices/src/vhost_user/gpu.rs
 
 diff --git a/Cargo.lock b/Cargo.lock
-index f90a782c..5d999e0b 100644
+index 687a9d78..fe172da4 100644
 --- a/Cargo.lock
 +++ b/Cargo.lock
-@@ -1630,6 +1630,7 @@ dependencies = [
+@@ -2340,6 +2340,7 @@ dependencies = [
+  "versionize_derive",
   "vfio-ioctls",
   "vfio_user",
-  "vhdx",
-+ "virtio-bindings 0.2.0",
++ "virtio-bindings",
   "virtio-devices",
   "virtio-queue",
   "vm-allocator",
 diff --git a/src/main.rs b/src/main.rs
-index 798be76a..d2bb799b 100644
+index 780b282b..56108ccf 100644
 --- a/src/main.rs
 +++ b/src/main.rs
-@@ -189,6 +189,10 @@ pub struct TopLevel {
-     /// tag=<tag_name>,socket=<socket_path>,num_queues=<number_of_queues>,queue_size=<size_of_each_queue>,id=<device_id>,pci_segment=<segment_id>
+@@ -199,6 +199,10 @@ pub struct TopLevel {
+     /// tag=<tag_name>, socket=<socket_path>, num_queues=<number_of_queues>, queue_size=<size_of_each_queue>, id=<device_id>, pci_segment=<segment_id>
      fs: Vec<String>,
  
 +    #[argh(option, long = "gpu")]
@@ -66,9 +66,9 @@ index 798be76a..d2bb799b 100644
 +    gpu: Vec<String>,
 +
      #[argh(option, long = "pmem")]
-     /// file=<backing_file_path>,size=<persistent_memory_size>,iommu=on|off,discard_writes=on|off,id=<device_id>,pci_segment=<segment_id>
+     /// file=<backing_file_path>, size=<persistent_memory_size>, iommu=on|off, discard_writes=on|off, id=<device_id>, pci_segment=<segment_id>
      pmem: Vec<String>,
-@@ -304,6 +308,12 @@ impl TopLevel {
+@@ -333,6 +337,12 @@ impl TopLevel {
              None
          };
  
@@ -81,7 +81,7 @@ index 798be76a..d2bb799b 100644
          let pmem = if !self.pmem.is_empty() {
              Some(self.pmem.iter().map(|x| x.as_str()).collect())
          } else {
-@@ -357,6 +367,7 @@ impl TopLevel {
+@@ -389,6 +399,7 @@ impl TopLevel {
              rng,
              balloon,
              fs,
@@ -89,7 +89,7 @@ index 798be76a..d2bb799b 100644
              pmem,
              serial,
              console,
-@@ -715,6 +726,7 @@ mod unit_tests {
+@@ -776,6 +787,7 @@ mod unit_tests {
              },
              balloon: None,
              fs: None,
@@ -156,7 +156,7 @@ index 680cbe29..55428cd8 100644
      CreateSeccompFilter(seccompiler::Error),
      #[error("Failed to create rate limiter: {0}")]
 diff --git a/virtio-devices/src/seccomp_filters.rs b/virtio-devices/src/seccomp_filters.rs
-index 10dc34d3..d02f1bd8 100644
+index 43d723b8..8620419f 100644
 --- a/virtio-devices/src/seccomp_filters.rs
 +++ b/virtio-devices/src/seccomp_filters.rs
 @@ -22,6 +22,7 @@ pub enum Thread {
@@ -197,17 +197,17 @@ index 10dc34d3..d02f1bd8 100644
          Thread::VirtioVhostNetCtl => virtio_vhost_net_ctl_thread_rules(),
          Thread::VirtioVsock => virtio_vsock_thread_rules(),
 diff --git a/virtio-devices/src/transport/pci_device.rs b/virtio-devices/src/transport/pci_device.rs
-index b51b33f7..b9c3ac35 100644
+index 95136aca..4da7c619 100644
 --- a/virtio-devices/src/transport/pci_device.rs
 +++ b/virtio-devices/src/transport/pci_device.rs
-@@ -1055,11 +1055,11 @@ impl PciDevice for VirtioPciDevice {
+@@ -1054,11 +1054,11 @@ impl PciDevice for VirtioPciDevice {
                      PciDeviceError::IoRegistrationFailed(shm_list.addr.raw_value(), e)
                  })?;
  
 -                for (idx, shm) in shm_list.region_list.iter().enumerate() {
 +                for (shmid, shm) in shm_list.region_list.iter() {
                      let shm_cap = VirtioPciCap64::new(
-                         PciCapabilityType::SharedMemoryConfig,
+                         PciCapabilityType::SharedMemory,
                          VIRTIO_SHM_BAR_INDEX as u8,
 -                        idx as u8,
 +                        *shmid,
@@ -216,7 +216,7 @@ index b51b33f7..b9c3ac35 100644
                      );
 diff --git a/virtio-devices/src/vhost_user/gpu.rs b/virtio-devices/src/vhost_user/gpu.rs
 new file mode 100644
-index 00000000..071ac4f3
+index 00000000..416d9629
 --- /dev/null
 +++ b/virtio-devices/src/vhost_user/gpu.rs
 @@ -0,0 +1,406 @@
@@ -579,7 +579,7 @@ index 00000000..071ac4f3
 +        &mut self,
 +        shm_regions: VirtioSharedMemoryList,
 +    ) -> std::result::Result<(), crate::Error> {
-+        if let Some(mut cache) = self.cache.as_mut() {
++        if let Some(cache) = self.cache.as_mut() {
 +            cache.0 = shm_regions;
 +            Ok(())
 +        } else {
@@ -645,30 +645,33 @@ index a31e523c..8b1baa8c 100644
  pub use self::vu_common_ctrl::VhostUserConfig;
  
 diff --git a/vmm/Cargo.toml b/vmm/Cargo.toml
-index 5f7975a2..29be28fc 100644
+index 15a6a06a..e8379c1a 100644
 --- a/vmm/Cargo.toml
 +++ b/vmm/Cargo.toml
-@@ -47,6 +47,7 @@ versionize_derive = "0.1.4"
+@@ -49,6 +49,7 @@ versionize = "0.1.10"
+ versionize_derive = "0.1.4"
  vfio-ioctls = { git = "https://github.com/rust-vmm/vfio", branch = "main", default-features = false }
  vfio_user = { git = "https://github.com/rust-vmm/vfio-user", branch = "main" }
- vhdx = { path = "../vhdx" }
 +virtio-bindings = "0.2.0"
  virtio-devices = { path = "../virtio-devices" }
- virtio-queue = "0.7.1"
+ virtio-queue = "0.8.0"
  vm-allocator = { path = "../vm-allocator" }
 diff --git a/vmm/src/api/mod.rs b/vmm/src/api/mod.rs
-index 5b0c3847..757448d5 100644
+index 8aac5d3c..041a6c41 100644
 --- a/vmm/src/api/mod.rs
 +++ b/vmm/src/api/mod.rs
-@@ -34,6 +34,7 @@ pub use self::http::start_http_path_thread;
- pub mod http;
- pub mod http_endpoint;
+@@ -38,8 +38,8 @@ pub use self::http::start_http_fd_thread;
+ pub use self::http::start_http_path_thread;
  
-+use crate::config::GpuConfig;
  use crate::config::{
-     DeviceConfig, DiskConfig, FsConfig, NetConfig, PmemConfig, RestoreConfig, UserDeviceConfig,
-     VdpaConfig, VmConfig, VsockConfig,
-@@ -132,6 +133,9 @@ pub enum ApiError {
+-    DeviceConfig, DiskConfig, FsConfig, NetConfig, PmemConfig, RestoreConfig, UserDeviceConfig,
+-    VdpaConfig, VmConfig, VsockConfig,
++    DeviceConfig, DiskConfig, FsConfig, GpuConfig, NetConfig, PmemConfig, RestoreConfig,
++    UserDeviceConfig, VdpaConfig, VmConfig, VsockConfig,
+ };
+ use crate::device_tree::DeviceTree;
+ use crate::vm::{Error as VmError, VmState};
+@@ -135,6 +135,9 @@ pub enum ApiError {
      /// The fs could not be added to the VM.
      VmAddFs(VmError),
  
@@ -678,7 +681,7 @@ index 5b0c3847..757448d5 100644
      /// The pmem device could not be added to the VM.
      VmAddPmem(VmError),
  
-@@ -302,6 +306,9 @@ pub enum ApiRequest {
+@@ -305,6 +308,9 @@ pub enum ApiRequest {
      /// Add a fs to the VM.
      VmAddFs(Arc<FsConfig>, Sender<ApiResponse>),
  
@@ -689,7 +692,7 @@ index 5b0c3847..757448d5 100644
      VmAddPmem(Arc<PmemConfig>, Sender<ApiResponse>),
  
 diff --git a/vmm/src/config.rs b/vmm/src/config.rs
-index d43653a7..24e37f81 100644
+index ecb8493a..6cabc573 100644
 --- a/vmm/src/config.rs
 +++ b/vmm/src/config.rs
 @@ -26,6 +26,8 @@ pub enum Error {
@@ -727,7 +730,7 @@ index d43653a7..24e37f81 100644
      pub pmem: Option<Vec<&'a str>>,
      pub serial: &'a str,
      pub console: &'a str,
-@@ -1253,6 +1260,56 @@ impl FsConfig {
+@@ -1254,6 +1261,56 @@ impl FsConfig {
      }
  }
  
@@ -784,7 +787,7 @@ index d43653a7..24e37f81 100644
  impl PmemConfig {
      pub fn parse(pmem: &str) -> Result<Self> {
          let mut parser = OptionParser::new();
-@@ -1786,6 +1843,17 @@ impl VmConfig {
+@@ -1787,6 +1844,17 @@ impl VmConfig {
              }
          }
  
@@ -802,7 +805,7 @@ index d43653a7..24e37f81 100644
          if let Some(pmems) = &self.pmem {
              for pmem in pmems {
                  pmem.validate(self)?;
-@@ -1971,6 +2039,15 @@ impl VmConfig {
+@@ -1972,6 +2040,15 @@ impl VmConfig {
              fs = Some(fs_config_list);
          }
  
@@ -818,7 +821,7 @@ index d43653a7..24e37f81 100644
          let mut pmem: Option<Vec<PmemConfig>> = None;
          if let Some(pmem_list) = &vm_params.pmem {
              let mut pmem_config_list = Vec::new();
-@@ -2077,6 +2154,7 @@ impl VmConfig {
+@@ -2078,6 +2155,7 @@ impl VmConfig {
              rng,
              balloon,
              fs,
@@ -826,7 +829,21 @@ index d43653a7..24e37f81 100644
              pmem,
              serial,
              console,
-@@ -2131,6 +2209,7 @@ impl Clone for VmConfig {
+@@ -2132,6 +2210,13 @@ impl VmConfig {
+             removed |= fs.len() != len;
+         }
+ 
++        // Remove if gpu device
++        if let Some(gpu) = self.gpu.as_mut() {
++            let len = gpu.len();
++            gpu.retain(|dev| dev.id.as_ref().map(|id| id.as_ref()) != Some(id));
++            removed |= gpu.len() != len;
++        }
++
+         // Remove if net device
+         if let Some(net) = self.net.as_mut() {
+             let len = net.len();
+@@ -2196,6 +2281,7 @@ impl Clone for VmConfig {
              rng: self.rng.clone(),
              balloon: self.balloon.clone(),
              fs: self.fs.clone(),
@@ -834,7 +851,7 @@ index d43653a7..24e37f81 100644
              pmem: self.pmem.clone(),
              serial: self.serial.clone(),
              console: self.console.clone(),
-@@ -2518,6 +2597,21 @@ mod tests {
+@@ -2583,6 +2669,21 @@ mod tests {
          Ok(())
      }
  
@@ -856,7 +873,7 @@ index d43653a7..24e37f81 100644
      #[test]
      fn test_pmem_parsing() -> Result<()> {
          // Must always give a file and size
-@@ -2752,6 +2846,7 @@ mod tests {
+@@ -2817,6 +2918,7 @@ mod tests {
              },
              balloon: None,
              fs: None,
@@ -864,7 +881,7 @@ index d43653a7..24e37f81 100644
              pmem: None,
              serial: ConsoleConfig {
                  file: None,
-@@ -2916,6 +3011,15 @@ mod tests {
+@@ -2982,6 +3084,15 @@ mod tests {
              Err(ValidationError::VhostUserRequiresSharedMemory)
          );
  
@@ -881,7 +898,7 @@ index d43653a7..24e37f81 100644
          still_valid_config.memory.shared = true;
          assert!(still_valid_config.validate().is_ok());
 diff --git a/vmm/src/device_manager.rs b/vmm/src/device_manager.rs
-index 3611e9af..bd3f6d7a 100644
+index 8c3f58c6..3c647db4 100644
 --- a/vmm/src/device_manager.rs
 +++ b/vmm/src/device_manager.rs
 @@ -10,8 +10,8 @@
@@ -895,7 +912,7 @@ index 3611e9af..bd3f6d7a 100644
  };
  use crate::cpu::{CpuManager, CPU_MANAGER_ACPI_SIZE};
  use crate::device_tree::{DeviceNode, DeviceTree};
-@@ -64,6 +64,7 @@ use serde::{Deserialize, Serialize};
+@@ -66,6 +66,7 @@ use serde::{Deserialize, Serialize};
  use std::collections::{BTreeSet, HashMap};
  use std::fs::{read_link, File, OpenOptions};
  use std::io::{self, stdout, Seek, SeekFrom};
@@ -903,7 +920,7 @@ index 3611e9af..bd3f6d7a 100644
  use std::mem::zeroed;
  use std::num::Wrapping;
  use std::os::unix::fs::OpenOptionsExt;
-@@ -74,11 +75,13 @@ use std::sync::{Arc, Mutex};
+@@ -76,11 +77,13 @@ use std::sync::{Arc, Mutex};
  use std::time::Instant;
  use tracer::trace_scoped;
  use vfio_ioctls::{VfioContainer, VfioDevice, VfioDeviceFd};
@@ -917,7 +934,7 @@ index 3611e9af..bd3f6d7a 100644
  };
  use virtio_devices::{Endpoint, IommuMapping};
  use vm_allocator::{AddressAllocator, SystemAllocator};
-@@ -119,6 +122,7 @@ const CONSOLE_DEVICE_NAME: &str = "__console";
+@@ -122,6 +125,7 @@ const PVPANIC_DEVICE_NAME: &str = "__pvpanic";
  // identifiers if the user doesn't give one
  const DISK_DEVICE_NAME_PREFIX: &str = "_disk";
  const FS_DEVICE_NAME_PREFIX: &str = "_fs";
@@ -925,7 +942,7 @@ index 3611e9af..bd3f6d7a 100644
  const NET_DEVICE_NAME_PREFIX: &str = "_net";
  const PMEM_DEVICE_NAME_PREFIX: &str = "_pmem";
  const VDPA_DEVICE_NAME_PREFIX: &str = "_vdpa";
-@@ -155,9 +159,15 @@ pub enum DeviceManagerError {
+@@ -158,9 +162,15 @@ pub enum DeviceManagerError {
      /// Cannot create virtio-fs device
      CreateVirtioFs(virtio_devices::vhost_user::Error),
  
@@ -941,7 +958,7 @@ index 3611e9af..bd3f6d7a 100644
      /// Cannot create vhost-user-blk device
      CreateVhostUserBlk(virtio_devices::vhost_user::Error),
  
-@@ -242,6 +252,9 @@ pub enum DeviceManagerError {
+@@ -245,6 +255,9 @@ pub enum DeviceManagerError {
      /// Cannot find a memory range for virtio-fs
      FsRangeAllocation,
  
@@ -951,7 +968,7 @@ index 3611e9af..bd3f6d7a 100644
      /// Error creating serial output file
      SerialOutputFileOpen(io::Error),
  
-@@ -2110,6 +2123,9 @@ impl DeviceManager {
+@@ -2140,6 +2153,9 @@ impl DeviceManager {
          // Add virtio-fs if required
          devices.append(&mut self.make_virtio_fs_devices()?);
  
@@ -961,7 +978,7 @@ index 3611e9af..bd3f6d7a 100644
          // Add virtio-pmem if required
          devices.append(&mut self.make_virtio_pmem_devices()?);
  
-@@ -2606,6 +2622,118 @@ impl DeviceManager {
+@@ -2654,6 +2670,118 @@ impl DeviceManager {
          Ok(devices)
      }
  
@@ -1080,7 +1097,7 @@ index 3611e9af..bd3f6d7a 100644
      fn make_virtio_pmem_device(
          &mut self,
          pmem_cfg: &mut PmemConfig,
-@@ -3828,6 +3956,7 @@ impl DeviceManager {
+@@ -3913,6 +4041,7 @@ impl DeviceManager {
                  | VirtioDeviceType::Block
                  | VirtioDeviceType::Pmem
                  | VirtioDeviceType::Fs
@@ -1088,7 +1105,7 @@ index 3611e9af..bd3f6d7a 100644
                  | VirtioDeviceType::Vsock => {}
                  _ => return Err(DeviceManagerError::RemovalNotAllowed(device_type)),
              }
-@@ -4096,6 +4225,13 @@ impl DeviceManager {
+@@ -4181,6 +4310,13 @@ impl DeviceManager {
          self.hotplug_virtio_pci_device(device)
      }
  
@@ -1103,18 +1120,30 @@ index 3611e9af..bd3f6d7a 100644
          self.validate_identifier(&pmem_cfg.id)?;
  
 diff --git a/vmm/src/lib.rs b/vmm/src/lib.rs
-index 7d8f41aa..372fc85f 100644
+index 7cad2ca4..e9129b48 100644
 --- a/vmm/src/lib.rs
 +++ b/vmm/src/lib.rs
-@@ -25,6 +25,7 @@ use crate::migration::{recv_vm_config, recv_vm_state};
+@@ -13,8 +13,8 @@ use crate::api::{
+     VmSendMigrationData, VmmPingResponse,
+ };
+ use crate::config::{
+-    add_to_config, DeviceConfig, DiskConfig, FsConfig, NetConfig, PmemConfig, RestoreConfig,
+-    UserDeviceConfig, VdpaConfig, VmConfig, VsockConfig,
++    add_to_config, DeviceConfig, DiskConfig, FsConfig, GpuConfig, NetConfig, PmemConfig,
++    RestoreConfig, UserDeviceConfig, VdpaConfig, VmConfig, VsockConfig,
+ };
+ #[cfg(all(target_arch = "x86_64", feature = "guest_debug"))]
+ use crate::coredump::GuestDebuggable;
+@@ -25,8 +25,6 @@ use crate::migration::{recv_vm_config, recv_vm_state};
  use crate::seccomp_filters::{get_seccomp_filter, Thread};
  use crate::vm::{Error as VmError, Vm, VmState};
  use anyhow::anyhow;
-+use config::GpuConfig;
+-#[cfg(feature = "dbus_api")]
+-use api::dbus::{DBusApiOptions, DBusApiShutdownChannels};
  use libc::{tcsetattr, termios, EFD_NONBLOCK, SIGINT, SIGTERM, TCSANOW};
  use memory_manager::MemoryManagerSnapshotData;
  use pci::PciBdf;
-@@ -1046,6 +1047,32 @@ impl Vmm {
+@@ -1139,6 +1137,32 @@ impl Vmm {
          }
      }
  
@@ -1147,7 +1176,7 @@ index 7d8f41aa..372fc85f 100644
      fn vm_add_pmem(&mut self, pmem_cfg: PmemConfig) -> result::Result<Option<Vec<u8>>, VmError> {
          self.vm_config.as_ref().ok_or(VmError::VmNotCreated)?;
  
-@@ -1975,6 +2002,13 @@ impl Vmm {
+@@ -2070,6 +2094,13 @@ impl Vmm {
                                          .map(ApiResponsePayload::VmAction);
                                      sender.send(response).map_err(Error::ApiResponseSend)?;
                                  }
@@ -1161,7 +1190,7 @@ index 7d8f41aa..372fc85f 100644
                                  ApiRequest::VmAddPmem(add_pmem_data, sender) => {
                                      let response = self
                                          .vm_add_pmem(add_pmem_data.as_ref().clone())
-@@ -2140,6 +2174,7 @@ mod unit_tests {
+@@ -2235,6 +2266,7 @@ mod unit_tests {
              },
              balloon: None,
              fs: None,
@@ -1169,7 +1198,7 @@ index 7d8f41aa..372fc85f 100644
              pmem: None,
              serial: ConsoleConfig {
                  file: None,
-@@ -2366,6 +2401,54 @@ mod unit_tests {
+@@ -2462,6 +2494,54 @@ mod unit_tests {
          );
      }
  
@@ -1225,7 +1254,7 @@ index 7d8f41aa..372fc85f 100644
      fn test_vmm_vm_cold_add_pmem() {
          let mut vmm = create_dummy_vmm();
 diff --git a/vmm/src/vm.rs b/vmm/src/vm.rs
-index 5723e491..c9ff26b5 100644
+index 078bdd8a..82f089a3 100644
 --- a/vmm/src/vm.rs
 +++ b/vmm/src/vm.rs
 @@ -12,8 +12,8 @@
@@ -1239,19 +1268,7 @@ index 5723e491..c9ff26b5 100644
  };
  use crate::config::{NumaConfig, PayloadConfig};
  #[cfg(all(target_arch = "x86_64", feature = "guest_debug"))]
-@@ -1428,6 +1428,11 @@ impl Vm {
-             fs.retain(|dev| dev.id.as_ref() != Some(&id));
-         }
- 
-+        // Remove if gpu device
-+        if let Some(gpu) = config.gpu.as_mut() {
-+            gpu.retain(|dev| dev.id.as_ref() != Some(&id));
-+        }
-+
-         // Remove if net device
-         if let Some(net) = config.net.as_mut() {
-             net.retain(|dev| dev.id.as_ref() != Some(&id));
-@@ -1506,6 +1511,30 @@ impl Vm {
+@@ -1467,6 +1467,30 @@ impl Vm {
          Ok(pci_device_info)
      }
  
@@ -1283,10 +1300,10 @@ index 5723e491..c9ff26b5 100644
          let pci_device_info = self
              .device_manager
 diff --git a/vmm/src/vm_config.rs b/vmm/src/vm_config.rs
-index 56add7ac..3e40b31a 100644
+index a51add7b..3edf76b5 100644
 --- a/vmm/src/vm_config.rs
 +++ b/vmm/src/vm_config.rs
-@@ -411,6 +411,32 @@ impl Default for FsConfig {
+@@ -411,6 +411,30 @@ impl Default for FsConfig {
      }
  }
  
@@ -1295,9 +1312,7 @@ index 56add7ac..3e40b31a 100644
 +    pub socket: PathBuf,
 +    #[serde(default = "default_gpuconfig_cache_size")]
 +    pub cache_size: u64,
-+    #[serde(default)]
 +    pub id: Option<String>,
-+    #[serde(default)]
 +    pub pci_segment: u16,
 +}
 +
@@ -1319,7 +1334,7 @@ index 56add7ac..3e40b31a 100644
  #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize, Default)]
  pub struct PmemConfig {
      pub file: PathBuf,
-@@ -576,6 +602,7 @@ pub struct VmConfig {
+@@ -576,6 +600,7 @@ pub struct VmConfig {
      pub rng: RngConfig,
      pub balloon: Option<BalloonConfig>,
      pub fs: Option<Vec<FsConfig>>,
@@ -1328,5 +1343,5 @@ index 56add7ac..3e40b31a 100644
      #[serde(default = "default_serial")]
      pub serial: ConsoleConfig,
 -- 
-2.40.1
+2.41.0
 

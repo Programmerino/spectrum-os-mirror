@@ -112,27 +112,5 @@ in lib.optionalString (hostPlatform.isSunOS && hostPlatform.is64bit) ''
   export inhibit_libc=true
 ''
 
-# Trick to build a gcc that is capable of emitting shared libraries *without* having the
-# targetPlatform libc available beforehand.  Taken from:
-#   https://web.archive.org/web/20170222224855/http://frank.harvard.edu/~coldwell/toolchain/
-#   https://web.archive.org/web/20170224235700/http://frank.harvard.edu/~coldwell/toolchain/t-linux.diff
 + lib.optionalString (targetPlatform != hostPlatform && withoutTargetLibc && enableShared)
-  (lib.optionalString (!stdenv.targetPlatform.isPower) ''
-    echo 'libgcc.a: crti.o crtn.o' >> libgcc/Makefile.in
-  '' + ''
-    echo 'SHLIB_LC=' >> libgcc/Makefile.in
-  '')
-
-+ lib.optionalString (!enableMultilib && hostPlatform.is64bit && !hostPlatform.isMips64n32) ''
-  export linkLib64toLib=1
-''
-
-# On mips platforms, gcc follows the IRIX naming convention:
-#
-#  $PREFIX/lib   = mips32
-#  $PREFIX/lib32 = mips64n32
-#  $PREFIX/lib64 = mips64
-#
-+ lib.optionalString (!enableMultilib && targetPlatform.isMips64n32) ''
-  export linkLib32toLib=1
-''
+  (import ./libgcc-buildstuff.nix { inherit lib stdenv; })

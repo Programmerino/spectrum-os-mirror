@@ -5,17 +5,18 @@
 , autoreconfHook
 , withDebugSymbols ? false
 , withCli ? true, libedit
-, withPython ? false , python3
-, withXtables ? true , iptables
+, withPython ? false, python3
+, withXtables ? true, iptables
+, nixosTests
 }:
 
 stdenv.mkDerivation rec {
-  version = "1.0.7";
+  version = "1.0.8";
   pname = "nftables";
 
   src = fetchurl {
     url = "https://netfilter.org/projects/nftables/files/${pname}-${version}.tar.xz";
-    hash = "sha256-wSrJQf/5ra7fFzZ9XOITeJuYoNMUJ3vCKz1x4QiR9BI=";
+    hash = "sha256-k3N0DeQagtvJiBjgpGoHP664qNBon6T6GnQ5nDK/PVA=";
   };
 
   nativeBuildInputs = [
@@ -29,7 +30,10 @@ stdenv.mkDerivation rec {
     gmp jansson libedit
   ] ++ lib.optional withCli libedit
     ++ lib.optional withXtables iptables
-    ++ lib.optional withPython python3;
+    ++ lib.optionals withPython [
+      python3
+      python3.pkgs.setuptools
+    ];
 
   configureFlags = [
     "--with-json"
@@ -38,6 +42,11 @@ stdenv.mkDerivation rec {
     ++ lib.optional (!withPython) "--disable-python"
     ++ lib.optional withPython "--enable-python"
     ++ lib.optional withXtables "--with-xtables";
+
+  passthru.tests = {
+    inherit (nixosTests) firewall-nftables lxd-nftables;
+    nat = { inherit (nixosTests.nat.nftables) firewall standalone; };
+  };
 
   meta = with lib; {
     description = "The project that aims to replace the existing {ip,ip6,arp,eb}tables framework";

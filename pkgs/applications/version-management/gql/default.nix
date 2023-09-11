@@ -2,36 +2,31 @@
 , rustPlatform
 , fetchFromGitHub
 , pkg-config
-, libgit2
+, libgit2_1_6
 , zlib
 }:
 
 rustPlatform.buildRustPackage rec {
   pname = "gql";
-  version = "0.4.0";
+  version = "0.5.0";
 
   src = fetchFromGitHub {
     owner = "AmrDeveloper";
     repo = "GQL";
     rev = version;
-    hash = "sha256-x6Es8J6qdtCdrs23eQoIDSusOiDH/mLKch14loEhO5k=";
+    hash = "sha256-UTyP9ugUXiPMzkeIvPJUtORvcJ93YOBltglmlcym3sI=";
   };
 
-  cargoHash = "sha256-OUMIISLsOAjjIZjMrPYK/cW+n0NbTnuu5Rakvm4LUf4=";
+  cargoHash = "sha256-AIt7Ns3vNrHQxJU7cSNr+h3tFGZ9hL1OMBqPHS61YUQ=";
 
   nativeBuildInputs = [
     pkg-config
   ];
 
   buildInputs = [
-    libgit2
+    libgit2_1_6
     zlib
   ];
-
-  # Cargo.lock is outdated
-  preConfigure = ''
-    cargo metadata --offline
-  '';
 
   meta = with lib; {
     description = "A SQL like query language to perform queries on .git files";
