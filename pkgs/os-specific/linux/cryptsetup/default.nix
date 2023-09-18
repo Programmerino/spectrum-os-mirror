@@ -4,7 +4,7 @@
 
   # Programs enabled by default upstream are implicitly enabled unless
   # manually set to false.
-, programs ? { cryptsetup-reencrypt = true; }
+, programs ? {}
   # The release tarballs contain precomputed manpage files, so we don't need
   # to run asciidoctor on the man sources. By avoiding asciidoctor, we make
   # the bare NixOS build hash independent of changes to the ruby ecosystem,
@@ -81,6 +81,7 @@ stdenv.mkDerivation rec {
     description = "LUKS for dm-crypt";
     changelog = "https://gitlab.com/cryptsetup/cryptsetup/-/raw/v${version}/docs/v${version}-ReleaseNotes";
     license = lib.licenses.gpl2;
+    mainProgram = "cryptsetup";
     maintainers = with lib.maintainers; [ raitobezarius ];
     platforms = with lib.platforms; linux;
   };

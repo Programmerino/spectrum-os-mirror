@@ -65,14 +65,26 @@ rec {
   # Vulkan developer beta driver
   # See here for more information: https://developer.nvidia.com/vulkan-driver
   vulkan_beta = generic rec {
-    version = "535.43.08";
+    version = "535.43.09";
     persistencedVersion = "535.98";
     settingsVersion = "535.98";
-    sha256_64bit = "sha256-u9OJ4xaHGDb5iA5+5jwJhWQGRDa5R6piF1c+K2DGaJs=";
-    openSha256 = "sha256-kbH/6yDhh44SB08xcX6+tm70PuUHF0tfbvHfIwx7o/U=";
+    sha256_64bit = "sha256-7QDp+VDgxH7RGW40kbQp4F/luh0DCYb4BS0gU/6wn+c=";
+    openSha256 = "sha256-7MOwKQCTaOo1//8OlSaNdpKeDXejZvmKFFeqhFrhAk8=";
     settingsSha256 = "sha256-jCRfeB1w6/dA27gaz6t5/Qo7On0zbAPIi74LYLel34s=";
     persistencedSha256 = "sha256-WviDU6B50YG8dO64CGvU3xK8WFUX8nvvVYm/fuGyroM=";
     url = "https://developer.nvidia.com/downloads/vulkan-beta-${lib.concatStrings (lib.splitString "." version)}-linux";
+  };
+
+  # data center driver compatible with current default cudaPackages
+  dc = dc_520;
+  dc_520 = generic rec {
+    version = "520.61.05";
+    url = "https://us.download.nvidia.com/tesla/${version}/NVIDIA-Linux-x86_64-${version}.run";
+    sha256_64bit = "sha256-EPYWZwOur/6iN/otDMrNDpNXr1mzu8cIqQl8lXhQlzU==";
+    fabricmanagerSha256 = "sha256-o8Kbmkg7qczKQclaGvEyXNzEOWq9ZpQZn9syeffnEiE==";
+    useSettings = false;
+    usePersistenced = false;
+    useFabricmanager = true;
   };
 
   # Update note:

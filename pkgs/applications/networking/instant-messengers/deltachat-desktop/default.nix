@@ -8,7 +8,7 @@
 , libdeltachat
 , makeDesktopItem
 , makeWrapper
-, noto-fonts-emoji
+, noto-fonts-color-emoji
 , pkg-config
 , python3
 , roboto
@@ -33,16 +33,16 @@ let
 in
 buildNpmPackage rec {
   pname = "deltachat-desktop";
-  version = "1.40.0";
+  version = "1.40.3";
 
   src = fetchFromGitHub {
     owner = "deltachat";
     repo = "deltachat-desktop";
     rev = "v${version}";
-    hash = "sha256-QvSBM2zR/LcQ2wtkh6mtlU8iqYmZfv6U5bRyMYjLZhE=";
+    hash = "sha256-UVsjka/ptUiSN9aqRESdFZA3uh+FJnJot/YXWUPCJtc=";
   };
 
-  npmDepsHash = "sha256-lxyXfPNu5U+0cge+cwcXHIJv+gVXCSzc5t/2c4IQxNM=";
+  npmDepsHash = "sha256-r0IUQNZJEpY8VE0G/WLdygup32iQ6DxfGkvOgFi7R4k=";
 
   nativeBuildInputs = [
     makeWrapper
@@ -85,7 +85,7 @@ buildNpmPackage rec {
     install -D build/icon.png \
       $out/share/icons/hicolor/scalable/apps/deltachat.png
 
-    ln -sf ${noto-fonts-emoji}/share/fonts/noto/NotoColorEmoji.ttf \
+    ln -sf ${noto-fonts-color-emoji}/share/fonts/noto/NotoColorEmoji.ttf \
       $out/lib/node_modules/deltachat-desktop/html-dist/fonts/noto/emoji
     for font in $out/lib/node_modules/deltachat-desktop/html-dist/fonts/Roboto-*.ttf; do
       ln -sf ${roboto}/share/fonts/truetype/$(basename $font) \

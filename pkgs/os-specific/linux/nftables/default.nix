@@ -27,7 +27,7 @@ stdenv.mkDerivation rec {
 
   buildInputs = [
     libmnl libnftnl libpcap
-    gmp jansson libedit
+    gmp jansson
   ] ++ lib.optional withCli libedit
     ++ lib.optional withXtables iptables
     ++ lib.optionals withPython [
