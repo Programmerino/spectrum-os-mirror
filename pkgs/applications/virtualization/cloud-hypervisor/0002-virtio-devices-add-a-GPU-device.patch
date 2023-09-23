@@ -1,4 +1,4 @@
-From 190d17525b2003274fd9947114824916f32b4c6f Mon Sep 17 00:00:00 2001
+From 0fb5900d6d4086fc4f9a7fe43a590cb22feec9f5 Mon Sep 17 00:00:00 2001
 From: Alyssa Ross <alyssa.ross@unikie.com>
 Date: Wed, 7 Sep 2022 14:16:29 +0000
 Subject: [PATCH 2/2] virtio-devices: add a GPU device
@@ -37,8 +37,8 @@ Signed-off-by: Alyssa Ross <hi@alyssa.is>
  vmm/src/device_manager.rs                  | 140 ++++++-
  vmm/src/lib.rs                             |  88 ++++-
  vmm/src/vm.rs                              |  28 +-
- vmm/src/vm_config.rs                       |  25 ++
- 15 files changed, 839 insertions(+), 17 deletions(-)
+ vmm/src/vm_config.rs                       |  27 ++
+ 15 files changed, 841 insertions(+), 17 deletions(-)
  create mode 100644 virtio-devices/src/vhost_user/gpu.rs
 
 diff --git a/Cargo.lock b/Cargo.lock
@@ -1300,10 +1300,10 @@ index 078bdd8a..82f089a3 100644
          let pci_device_info = self
              .device_manager
 diff --git a/vmm/src/vm_config.rs b/vmm/src/vm_config.rs
-index a51add7b..3edf76b5 100644
+index a51add7b..afc819a4 100644
 --- a/vmm/src/vm_config.rs
 +++ b/vmm/src/vm_config.rs
-@@ -411,6 +411,30 @@ impl Default for FsConfig {
+@@ -411,6 +411,32 @@ impl Default for FsConfig {
      }
  }
  
@@ -1312,7 +1312,9 @@ index a51add7b..3edf76b5 100644
 +    pub socket: PathBuf,
 +    #[serde(default = "default_gpuconfig_cache_size")]
 +    pub cache_size: u64,
++    #[serde(default)]
 +    pub id: Option<String>,
++    #[serde(default)]
 +    pub pci_segment: u16,
 +}
 +
@@ -1334,7 +1336,7 @@ index a51add7b..3edf76b5 100644
  #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize, Default)]
  pub struct PmemConfig {
      pub file: PathBuf,
-@@ -576,6 +600,7 @@ pub struct VmConfig {
+@@ -576,6 +602,7 @@ pub struct VmConfig {
      pub rng: RngConfig,
      pub balloon: Option<BalloonConfig>,
      pub fs: Option<Vec<FsConfig>>,
@@ -1343,5 +1345,5 @@ index a51add7b..3edf76b5 100644
      #[serde(default = "default_serial")]
      pub serial: ConsoleConfig,
 -- 
-2.41.0
+2.42.0
 
