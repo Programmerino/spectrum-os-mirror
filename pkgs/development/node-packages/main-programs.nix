@@ -13,7 +13,6 @@
   "@astrojs/language-server" = "astro-ls";
   "@babel/cli" = "babel";
   "@commitlint/cli" = "commitlint";
-  "@forge/cli" = "forge";
   "@gitbeaker/cli" = "gitbeaker";
   "@mermaid-js/mermaid-cli" = "mmdc";
   "@nerdwallet/shepherd" = "shepherd";
@@ -38,7 +37,6 @@
   fkill-cli = "fkill";
   fleek-cli = "fleek";
   git-run = "gr";
-  gitmoji-cli = "gitmoji";
   graphql-cli = "graphql";
   graphql-language-service-cli = "graphql-lsp";
   grunt-cli = "grunt";
