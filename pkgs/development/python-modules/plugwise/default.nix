@@ -20,7 +20,7 @@
 
 buildPythonPackage rec {
   pname = "plugwise";
-  version = "0.33.0";
+  version = "0.35.1";
   format = "setuptools";
 
   disabled = pythonOlder "3.7";
@@ -29,7 +29,7 @@ buildPythonPackage rec {
     owner = pname;
     repo = "python-plugwise";
     rev = "refs/tags/v${version}";
-    hash = "sha256-EhPy1n1dsvsE4ciVNx86Ttvoyc61e2Lxecioy0kVN4A=";
+    hash = "sha256-eHJQXLiuWmJo/Eo4B8gEo44rwpPA7ASjxKSmdu6Tv9M=";
   };
 
   propagatedBuildInputs = [

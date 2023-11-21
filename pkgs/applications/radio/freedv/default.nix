@@ -25,19 +25,21 @@
 
 stdenv.mkDerivation rec {
   pname = "freedv";
-  version = "1.9.2";
+  version = "1.9.5";
 
   src = fetchFromGitHub {
     owner = "drowe67";
     repo = "freedv-gui";
     rev = "v${version}";
-    hash = "sha256-SBWwAmIsa9HfaZpH8TioMm9IaoZ+x4HNHaOBps0vA0A=";
+    hash = "sha256-uCWdDmHzNx1vkZFttQZLD4YfXoXz5VZQfir9sGOoDhw=";
   };
 
   postPatch = lib.optionalString stdenv.isDarwin ''
+    substituteInPlace CMakeLists.txt \
+      --replace "-Wl,-ld_classic" ""
     substituteInPlace src/CMakeLists.txt \
       --replace "\''${CMAKE_SOURCE_DIR}/macdylibbundler/dylibbundler" "dylibbundler"
-    sed -i "/hdiutil/d" src/CMakeLists.txt
+    sed -i "/codesign/d;/hdiutil/d" src/CMakeLists.txt
   '';
 
   nativeBuildInputs = [

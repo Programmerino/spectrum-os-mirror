@@ -11,6 +11,7 @@
 , gexiv2
 , tracker
 , meson
+, mesonEmulatorHook
 , ninja
 , pkg-config
 , vala
@@ -47,11 +48,11 @@
 
 stdenv.mkDerivation rec {
   pname = "tracker-miners";
-  version = "3.5.2";
+  version = "3.5.3";
 
   src = fetchurl {
     url = "mirror://gnome/sources/${pname}/${lib.versions.majorMinor version}/${pname}-${version}.tar.xz";
-    sha256 = "QPuR+svZRo4m6+zHEdg2Mc2K6TkcYV1o27A8vKsbbGk=";
+    hash = "sha256-drjVB3EOiX6FPsN/Ju906XqVU3CLYLjEE0lF+bgWU8s=";
   };
 
   patches = [
@@ -68,6 +69,7 @@ stdenv.mkDerivation rec {
     docbook-xsl-nons
     docbook_xml_dtd_45
     gettext
+    glib
     itstool
     libxslt
     meson
@@ -75,6 +77,8 @@ stdenv.mkDerivation rec {
     pkg-config
     vala
     wrapGAppsNoGuiHook
+  ] ++ lib.optionals (!stdenv.buildPlatform.canExecute stdenv.hostPlatform) [
+    mesonEmulatorHook
   ];
 
   # TODO: add libenca, libosinfo
@@ -83,7 +87,6 @@ stdenv.mkDerivation rec {
     dbus
     exempi
     giflib
-    glib
     gexiv2
     totem-pl-parser
     tracker

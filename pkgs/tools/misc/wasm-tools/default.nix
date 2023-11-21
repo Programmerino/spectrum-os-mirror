@@ -5,17 +5,19 @@
 
 rustPlatform.buildRustPackage rec {
   pname = "wasm-tools";
-  version = "1.0.42";
+  version = "1.0.52";
 
   src = fetchFromGitHub {
     owner = "bytecodealliance";
     repo = pname;
     rev = "${pname}-${version}";
-    hash = "sha256-RDP4sPHwf1/C9eheHNZsd45CZlR6qkJL2I1Fv94iHhU=";
+    hash = "sha256-6x2H+WY23XxBWmAqD2Lsc4TdCY76XiR/BhSU++XuIFY=";
     fetchSubmodules = true;
   };
 
-  cargoHash = "sha256-94bd2L+zRdHK/632JWQBIA8QnCTxrvfTeXRpiOV0yoQ=";
+  # Disable cargo-auditable until https://github.com/rust-secure-code/cargo-auditable/issues/124 is solved.
+  auditable = false;
+  cargoHash = "sha256-1YnoHL+FKXhopcW0Scya22sRBwantRH9gF7w/rxU0H8=";
   cargoBuildFlags = [ "--package" "wasm-tools" ];
   cargoTestFlags = [ "--all" ];
 
